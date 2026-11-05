@@ -95,7 +95,7 @@ textarea{min-height:100px;resize:vertical}
 .s-synced{color:#1c6632;background:#e3f1e6}
 .s-failed{color:#962421;background:#fbe6e4}
 .s-conflict{color:#56297f;background:#eee5f6}
-.s-saved{color:#1c6632;background:#e3f1e6}
+.s-saved,.s-done{color:#1c6632;background:#e3f1e6}
 progress{width:100%;height:18px;accent-color:var(--green)}
 dialog{border:1px solid #a0b5a9;border-radius:12px;padding:30px;max-width:min(520px,calc(100vw - 32px))}
 dialog::backdrop{background:#132b2699}
@@ -128,7 +128,7 @@ nav a{position:relative}nav a.active:before{content:"";position:absolute;left:-1
     <a href="#plans"><span aria-hidden="true">▤ &nbsp;</span>Session plans <span class="count" id="planCount"></span></a>
     <a href="#guide"><span aria-hidden="true">? &nbsp;</span>Demo &amp; help</a>
   </nav>
-  <div class="asidebottom"><strong>Small resources.<br>Big discoveries.</strong><p>Plan practical STEM sessions with materials you already have.</p><small>Accessible prototype, v1.1</small></div>
+  <div class="asidebottom"><strong>Small resources.<br>Big discoveries.</strong><p>Plan practical STEM sessions with materials you already have.</p><small>Accessible prototype, v2.0</small></div>
 </aside>
 <div class="workspace">
   <header>
@@ -141,11 +141,14 @@ nav a{position:relative}nav a.active:before{content:"";position:absolute;left:-1
   </header>
   <div id="notice" role="status" aria-live="polite"></div>
   <main id="main" tabindex="-1"></main>
-  <footer>STEMMate Namibia prototype v1.1, 4 October 2026. Synthetic activities and accounts. No learner personal information is collected.</footer>
+  <footer>STEMMate Namibia prototype v2.0 (A4 slice). Synthetic activities and accounts. No learner personal information is collected.</footer>
 </div>
 <div class="vh" id="announcer" aria-live="polite"></div>
 <dialog id="dialog" aria-labelledby="dlgTitle"></dialog>
 
+<script src="src/validation.js"></script>
+<script src="src/storage.js"></script>
+<script src="src/planService.js"></script>
 <script>
 "use strict";
 /* ---------- Activity content (synthetic; kept as data, separate from the interface) ---------- */
@@ -180,14 +183,17 @@ const SYNC={
 const UNSYNCED=['local','pending','syncing','failed','conflict'];
 
 /* ---------- State ---------- */
-const KEY='stemmate-v1.1';
+const KEY='stemmate-v2';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const lines=t=>String(t||'').split('\n').map(x=>x.trim()).filter(Boolean);
 const fmtDate=d=>d?new Date(d+'T00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):'No date set';
-const fresh=()=>({user:null,saved:[],plans:[],draft:null});
+const fresh=()=>({user:null,saved:[],editing:null});
 let data=fresh(),storageOK=true;
-try{const prev=JSON.parse(localStorage.getItem(KEY));if(prev&&Array.isArray(prev.saved)&&Array.isArray(prev.plans))data={...data,...prev}}catch{storageOK=false}
+try{const prev=JSON.parse(localStorage.getItem(KEY));if(prev&&Array.isArray(prev.saved))data={...data,...prev}}catch{storageOK=false}
+/* A4 slice: plans are stored through the Repository in src/storage.js and managed by src/planService.js */
+let deviceStore;try{deviceStore=window.localStorage;deviceStore.getItem(KEY)}catch{deviceStore=STEMStorage.createMemoryStore();storageOK=false}
+const plansSvc=STEMPlans.createPlanService(STEMStorage.createPlanRepository(deviceStore,'stemmate-v2-plans'),STEMValidation);
 let simulatedOffline=false,failNext=false,conflictNext=false,interruptNext=false,syncing=false,retryTimer=null,keepNotice=false;
 let fstate={q:'',topic:'',level:'',duration:'',mats:[]};
 const offline=()=>simulatedOffline||!navigator.onLine;
@@ -198,16 +204,16 @@ function announce(t){const a=$('announcer');a.textContent='';setTimeout(()=>a.te
 function tag(k){const[i,t]=SYNC[k];return `<span class="s s-${k}"><span aria-hidden="true">${i}</span> ${t}</span>`}
 function go(h){if(location.hash==='#'+h)render();else location.hash=h}
 function status(){
-  const c=k=>data.plans.filter(p=>p.sync===k).length,st=$('status');
+  const all=plansSvc.list(),c=k=>all.filter(p=>p.status==='Completed'&&p.sync===k).length,st=$('status');
   let t,cls='status';
   if(offline()){t=`○ Offline: working from this device${c('pending')?`, ${c('pending')} waiting to sync`:''}`;cls+=' off'}
   else if(c('conflict')){t=`⇄ ${c('conflict')} plan needs your decision`;cls+=' attn'}
   else if(c('failed')){t=`! ${c('failed')} plan failed to sync, retrying`;cls+=' attn'}
   else if(syncing||c('syncing'))t='↻ Synchronising';
   else if(c('pending'))t=`◷ Online, ${c('pending')} waiting to sync`;
-  else t=data.plans.length?'● Online, all plans synced':'● Online';
+  else t=all.some(p=>p.status==='Completed')?'● Online, all completed plans synced':'● Online';
   st.className=cls;st.textContent=t;
-  $('savedCount').textContent=data.saved.length||'';$('planCount').textContent=data.plans.length||'';
+  $('savedCount').textContent=data.saved.length||'';$('planCount').textContent=all.length||'';
   $('who').textContent=data.user?`Signed in: ${data.user}`:'';$('signoutBtn').hidden=!data.user;$('nav').hidden=!data.user;st.hidden=!data.user;
 }
 
@@ -217,11 +223,11 @@ function signin(){$('main').innerHTML=`<div class="signin"><div class="eyebrow">
  <div class="actions"><button class="primary" onclick="doSignin('Facilitator F-01')">Sign in as Facilitator F-01</button><button onclick="doSignin('Facilitator F-02')">Sign in as Facilitator F-02</button></div>
  <p class="muted">Prototype: these accounts are fictional and no password is collected.</p></div>`;return 'Sign in'}
 window.doSignin=u=>{data.user=u;persist();notify(`Signed in as ${esc(u)}.`,'ok');go('browse')};
-function unsyncedItems(){const items=data.plans.filter(p=>UNSYNCED.includes(p.sync)).map(p=>`${esc(p.title)}: ${SYNC[p.sync][1]}`);if(data.draft)items.push(`${esc(data.draft.title||'Untitled draft')}: unfinished draft`);return items}
+function unsyncedItems(){return plansSvc.list().filter(p=>p.status!=='Completed'||UNSYNCED.includes(p.sync)).map(p=>`${esc(p.title||'Untitled plan')}: ${p.status!=='Completed'?'draft, not completed':SYNC[p.sync][1]}`)}
 window.signoutAsk=()=>{const un=unsyncedItems();
  openDialog(`<h2 id="dlgTitle">Sign out of this shared device?</h2>${un.length?`<div class="msg err"><strong>${un.length} ${un.length===1?'item has':'items have'} not synced.</strong><p>Signing out removes ${un.length===1?'it':'them'} from this device. ${un.length===1?'It':'They'} cannot be recovered.</p><ul>${un.map(x=>`<li>${x}</li>`).join('')}</ul></div>`:`<p>Your plans and saved activities will be removed from this device. Synced plans stay with the outreach unit.</p>`}
  <div class="actions">${un.length?`<button class="primary" onclick="closeDialog();go('plans')">Go to session plans</button><button class="danger" onclick="doSignout()">Sign out and remove ${un.length}</button>`:`<button onclick="closeDialog()">Cancel</button><button class="primary" onclick="doSignout()">Sign out</button>`}</div>`)};
-window.doSignout=()=>{closeDialog();data=fresh();persist();notify('<strong>Signed out.</strong> Plans, drafts and saved activities were removed from this device.','ok');go('signin')};
+window.doSignout=()=>{closeDialog();plansSvc.clear();data=fresh();persist();notify('<strong>Signed out.</strong> Plans, drafts and saved activities were removed from this device.','ok');go('signin')};
 
 /* ---------- Browse and filter (FR-01) ---------- */
 function card(a){return `<article class="card t-${a.topic.toLowerCase()}"><div class="cardhead"><span class="symbol" aria-hidden="true">${icon(a.id)}</span><span class="topic">${a.topic}</span></div><div class="cardbody"><div class="meta">${a.level}, ${a.minutes} min</div>${data.saved.includes(a.id)?`<p>${tag('saved')}</p>`:''}<h2>${a.title}</h2><p>${a.desc}</p><p class="meta">Needs: ${a.materials.join(', ')}</p><a class="btn" href="#activity/${a.id}">View ${a.title.toLowerCase()}</a></div></article>`}
@@ -273,16 +279,25 @@ window.saveActivity=id=>{const a=activities.find(x=>x.id===id),box=$('dl'),btn=$
    box.innerHTML='<div class="msg err"><strong>Not saved. The transfer stopped at 60%.</strong><p>No partial copy was kept on this device. Select Try saving again.</p></div>';announce('Not saved. The transfer stopped at 60 percent. No partial copy was kept.');return}
   if(pct>=100){clearInterval(t);data.saved.push(id);if(!persist()){data.saved=data.saved.filter(x=>x!==id);return}notify('<strong>Activity saved.</strong> You can now open it offline on this device.','ok');render()}},150)};
 window.removeSaved=id=>{data.saved=data.saved.filter(x=>x!==id);persist();notify('Removed from this device. You need a connection to open it again.');render()};
-window.startPlan=id=>{const a=activities.find(x=>x.id===id);data.draft={activity:id,title:a.title+' session',date:'',venue:VENUES[0],level:a.level,minutes:a.minutes,materials:a.materials.join('\n'),steps:a.steps.join('\n'),safety:a.safety,inclusion:a.inclusion,participation:{}};persist();go('editor')};
+window.startPlan=id=>{const a=activities.find(x=>x.id===id);
+ const r=plansSvc.saveDraft({activityId:id,title:a.title+' session',date:'',venue:VENUES[0],level:a.level,minutes:a.minutes,materials:a.materials.join('\n'),steps:a.steps.join('\n'),safety:a.safety,inclusion:a.inclusion});
+ if(!r.ok){notify(esc(r.error),'err');return}
+ data.editing=r.plan.id;persist();go('editor')};
 
-/* ---------- Plan editor (FR-03, FR-04) ---------- */
-const FIELDS={title:'Session title',date:'Session date',minutes:'Total time in minutes',materials:'Materials',steps:'Steps and timings',safety:'Safety notes',inclusion:'Inclusion and adaptations'};
+/* ---------- Plan editor (FR-03, FR-04). Rules live in src/validation.js and src/planService.js ---------- */
+const FIELDS=STEMValidation.REQUIRED_FIELDS;
 function field(id,label,value,type='text',hint=''){return `<div><label for="${id}">${label} *</label>${hint?`<p class="hint" id="${id}-hint">${hint}</p>`:''}<input id="${id}" name="${id}" type="${type}" ${type==='number'?'min="5" max="240" inputmode="numeric"':type==='text'?'maxlength="140"':''} value="${esc(value)}"${hint?` aria-describedby="${id}-hint"`:''}><p class="error" id="${id}-err" hidden></p></div>`}
 function area(id,label,value,hint){return `<div class="full"><label for="${id}">${label} *</label><p class="hint" id="${id}-hint">${hint}</p><textarea id="${id}" name="${id}" maxlength="5000" aria-describedby="${id}-hint">${esc(value)}</textarea><p class="error" id="${id}-err" hidden></p></div>`}
-function editor(){const p=data.draft;
+function stateTag(p){return p.status==='Completed'?'<span class="s s-done"><span aria-hidden="true">✓</span> Completed</span>':'<span class="s s-draft"><span aria-hidden="true">✎</span> Draft</span>'}
+function stateLine(p){return p.status==='Completed'?'All required details are in. This plan can be used and synced.':'Saved on this device but not finished. Drafts are not synced until you complete them.'}
+function editing(){return data.editing?plansSvc.get(data.editing):null}
+let reopenWarned=false;
+function editor(){const p=editing();reopenWarned=false;
  if(!p){$('main').innerHTML='<h1 tabindex="-1">Create a session plan</h1><p>Choose an activity to start planning.</p><a class="btn primary" href="#browse">Browse activities</a>';return 'Create a session plan'}
- $('main').innerHTML=`<a class="back" href="#plans">Back to session plans</a><div class="eyebrow">Plan your session</div><h1 tabindex="-1">${p.id?'Edit':'Create'} session plan</h1><p class="muted">Adapt the activity to your group. Required fields are marked with *.</p>
- ${offline()?'<div class="warning"><strong>You are offline.</strong><p>Your work stays on this device and syncs later.</p></div>':''}
+ $('main').innerHTML=`<a class="back" href="#plans">Back to session plans</a><div class="eyebrow">Plan your session</div><h1 tabindex="-1">Edit session plan</h1>
+ <p id="stateRow">${stateTag(p)} <span class="muted">${stateLine(p)}</span></p>
+ <p class="muted">Adapt the activity to your group. You can save a draft at any time. Fields marked * are needed to complete the plan.</p>
+ ${offline()?'<div class="warning"><strong>You are offline.</strong><p>Your work stays on this device and syncs after you complete it.</p></div>':''}
  <div id="errors"></div>
  <form id="planForm" class="panel" novalidate><div class="formgrid">
  ${field('title','Session title',p.title)}
@@ -295,100 +310,107 @@ function editor(){const p=data.draft;
  ${area('steps','Steps and timings',p.steps,'One step per line, in order.')}
  ${area('safety','Safety notes',p.safety,'If there are no hazards, write: No special hazards.')}
  ${area('inclusion','Inclusion and adaptations',p.inclusion,'How will you involve learners who need extra support?')}
- </div><p id="draftStatus" class="muted">${storageOK?'Draft saved on this device.':'Device storage is unavailable.'}</p>
- <div class="actions"><button type="submit" class="primary">Review session plan</button><button type="button" onclick="saveDraft()">Save draft</button></div></form>`;
+ </div><p id="draftStatus" class="muted">Changes save automatically as a draft on this device.</p>
+ <div class="actions"><button type="submit" class="primary">Review and complete</button><button type="button" onclick="saveDraft()">Save draft</button><button type="button" class="danger" onclick="deletePlan('${p.id}')">Delete plan</button></div></form>`;
  $('planForm').addEventListener('input',()=>saveDraft(false));
- $('planForm').addEventListener('submit',e=>{e.preventDefault();saveDraft(false);const d=data.draft,errors=[];
-  const check=(name,bad,msg)=>{const el=$(name),er=$(name+'-err');el.setAttribute('aria-invalid',String(bad));er.hidden=!bad;er.textContent=bad?msg:'';
-   const hint=$(name+'-hint')?name+'-hint':'';el.setAttribute('aria-describedby',[bad?name+'-err':'',hint].filter(Boolean).join(' ')||'');if(bad)errors.push([name,msg])};
-  check('title',!String(d.title).trim(),'Enter a session title.');
-  check('date',!d.date,'Enter the session date.');
-  check('minutes',!(Number(d.minutes)>=5&&Number(d.minutes)<=240),'Enter a duration between 5 and 240 minutes.');
-  check('materials',!lines(d.materials).length,'List the materials needed, or write None.');
-  check('steps',!lines(d.steps).length,'Add at least one step.');
-  check('safety',!String(d.safety).trim(),'Add at least one safety note. If there are no hazards, write: No special hazards.');
-  check('inclusion',!String(d.inclusion).trim(),'Add at least one inclusion prompt.');
-  if(errors.length){$('errors').innerHTML=`<div class="msg err" role="alert" tabindex="-1" id="errSum"><strong>Fix ${errors.length} ${errors.length===1?'thing':'things'} before reviewing this plan</strong><ul>${errors.map(([id,msg])=>`<li><a href="#" onclick="document.getElementById('${id}').focus();return false">${FIELDS[id]}: ${msg}</a></li>`).join('')}</ul></div>`;$('errSum').focus();return}
-  go('review')});
- return p.id?'Edit session plan':'Create session plan'}
-window.saveDraft=(show=true)=>{const form=$('planForm');if(!form)return;const v=Object.fromEntries(new FormData(form));data.draft={...data.draft,...v,minutes:Number(v.minutes)};const ok=persist();
- $('draftStatus').textContent=ok?`Draft saved on this device at ${new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}.`:'Device storage is unavailable. Keep this page open.';if(show&&ok)notify('Draft saved. You can return to it from Session plans.','ok')};
+ $('planForm').addEventListener('submit',e=>{e.preventDefault();const r=saveDraft(false);if(!r)return;
+  const {errors}=STEMValidation.validatePlan(r.plan);showErrors(errors);if(Object.keys(errors).length)return;go('review')});
+ return 'Edit session plan'}
+function formValues(){return {...Object.fromEntries(new FormData($('planForm'))),id:data.editing}}
+function showErrors(errors){const list=[];
+ Object.keys(FIELDS).forEach(name=>{const el=$(name),er=$(name+'-err');if(!el)return;const msg=errors[name];
+  el.setAttribute('aria-invalid',String(!!msg));er.hidden=!msg;er.textContent=msg||'';
+  const d=[msg?name+'-err':'',$(name+'-hint')?name+'-hint':''].filter(Boolean).join(' ');if(d)el.setAttribute('aria-describedby',d);else el.removeAttribute('aria-describedby');
+  if(msg)list.push([name,msg])});
+ if(!list.length){$('errors').innerHTML='';return}
+ $('errors').innerHTML=`<div class="msg err" role="alert" tabindex="-1" id="errSum"><strong>Fix ${list.length} ${list.length===1?'thing':'things'} before completing this plan</strong><p>Your work is saved as a draft.</p><ul>${list.map(([id,msg])=>`<li><a href="#" onclick="document.getElementById('${id}').focus();return false">${FIELDS[id]}: ${msg}</a></li>`).join('')}</ul></div>`;$('errSum').focus()}
+window.saveDraft=(show=true)=>{if(!$('planForm'))return null;const r=plansSvc.saveDraft(formValues());
+ if(!r.ok){storageOK=false;$('draftStatus').textContent=r.error;notify(esc(r.error),'err');return null}
+ storageOK=true;$('draftStatus').textContent=`Draft saved on this device at ${new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}.`;
+ $('stateRow').innerHTML=`${stateTag(r.plan)} <span class="muted">${stateLine(r.plan)}</span>`;
+ if(r.reopened&&!reopenWarned){reopenWarned=true;notify('You changed a completed plan, so it is a <strong>Draft</strong> again. Select Review and complete when you are finished.','warn')}
+ else if(show)notify('Draft saved. You can return to it from Session plans.','ok');
+ status();return r};
 
-/* ---------- Review, save and plan view ---------- */
-function planContent(p){return `<div class="panel"><div class="row"><div><h2>${esc(p.title)}</h2><p class="muted">${esc(fmtDate(p.date))}, ${esc(p.venue)}, ${esc(p.level)}, ${esc(p.minutes)} minutes</p></div>${p.id&&p.sync?tag(p.sync):'<span class="tag">Ready to save</span>'}</div>
+/* ---------- Review, complete and plan view ---------- */
+function planContent(p){return `<div class="panel"><div class="row"><div><h2>${esc(p.title)}</h2><p class="muted">${esc(fmtDate(p.date))}, ${esc(p.venue)}, ${esc(p.level)}, ${esc(p.minutes)} minutes</p></div><div>${stateTag(p)} ${p.status==='Completed'?tag(p.sync):''}</div></div>
  <h3>Materials</h3><ul>${lines(p.materials).map(m=>`<li>${esc(m)}</li>`).join('')}</ul><h3>Steps and timings</h3><ol>${lines(p.steps).map(s=>`<li>${esc(s)}</li>`).join('')}</ol>
  <h3>Safety</h3><p>${esc(p.safety)}</p><h3>Inclusion and adaptations</h3><p>${esc(p.inclusion)}</p></div>`}
-function review(){const p=data.draft;if(!p){go('plans');return 'Session plans'}
- $('main').innerHTML=`<a class="back" href="#editor">Back to editing</a><div class="eyebrow">Check before your session</div><h1 tabindex="-1">Review your plan</h1><p class="muted">Make sure the timing, materials and adaptations suit your group.</p>${planContent(p)}<div class="actions"><button class="primary" onclick="finishPlan()">Save session plan</button><a class="btn" href="#editor">Edit plan</a></div>`;return 'Review your plan'}
-window.finishPlan=()=>{const old=data.plans.find(x=>x.id===data.draft.id);
- const p={participation:{},version:0,...data.draft,id:data.draft.id||'p'+Date.now(),updated:new Date().toISOString(),sync:'pending',version:old?old.version:0};
- const prev=JSON.parse(JSON.stringify(data)),i=data.plans.findIndex(x=>x.id===p.id);if(i<0)data.plans.push(p);else data.plans[i]=p;data.draft=null;
- if(!persist()){data=prev;return}
- notify(offline()?'<strong>Plan saved on this device.</strong> It will sync automatically when you are back online.':'<strong>Plan saved on this device.</strong> Sending it to the outreach unit now.','ok');go('plan/'+p.id);drain()};
-function plans(){
- $('main').innerHTML=`<div class="topline"><div><div class="eyebrow">Make time for discovery</div><h1 tabindex="-1">Your session plans</h1><p class="muted">Keep your sessions together and ready for the classroom.</p></div><a class="btn primary" href="#browse">Create a plan</a></div>
- ${data.draft?`<div class="intro"><div><strong>You have an unfinished draft</strong><p>${esc(data.draft.title)}</p></div><a class="btn" href="#editor">Continue draft</a></div>`:''}
- ${data.plans.length?`<div class="panel">${data.plans.map(p=>`<div class="row"><div><h2 style="font-size:20px">${esc(p.title)}</h2><p class="muted">${esc(fmtDate(p.date))}, ${esc(p.minutes)} min</p>${tag(p.sync)} <span class="muted" style="font-size:14px">${SYNC[p.sync][2]}</span></div><div class="actions" style="margin:0">${p.sync==='conflict'?`<button class="primary" onclick="resolveAsk('${p.id}')">Choose version<span class="vh"> for ${esc(p.title)}</span></button>`:''}<a class="btn" href="#plan/${p.id}">Open<span class="vh"> ${esc(p.title)}</span></a></div></div>`).join('')}</div>
- ${!offline()&&data.plans.some(p=>['pending','failed'].includes(p.sync))?'<div class="actions"><button class="primary" onclick="syncNow()">Sync now</button></div>':''}`
+function review(){const p=editing();if(!p){go('plans');return 'Session plans'}
+ if(!STEMValidation.validatePlan(p).valid){go('editor');return 'Edit session plan'}
+ $('main').innerHTML=`<a class="back" href="#editor">Back to editing</a><div class="eyebrow">Check before your session</div><h1 tabindex="-1">Review and complete your plan</h1><p class="muted">Make sure the timing, materials and adaptations suit your group. Completing the plan marks it ready to use and queues it to sync.</p>${planContent(p)}<div class="actions"><button class="primary" onclick="finishPlan()">Mark plan completed</button><a class="btn" href="#editor">Keep editing</a></div>`;return 'Review and complete your plan'}
+window.finishPlan=()=>{const p=editing();if(!p){go('plans');return}
+ const r=plansSvc.completePlan(p);
+ if(!r.ok){notify(r.errors?'This plan is missing required details. It is still saved as a draft.':esc(r.error),'err');go('editor');return}
+ data.editing=null;persist();
+ notify(offline()?'<strong>Plan completed and saved on this device.</strong> It will sync automatically when you are back online.':'<strong>Plan completed and saved on this device.</strong> Sending it to the outreach unit now.','ok');go('plan/'+r.plan.id);drain()};
+function planRow(p){const done=p.status==='Completed';
+ return `<div class="row"><div><h2 style="font-size:20px">${esc(p.title||'Untitled plan')}</h2><p class="muted">${esc(fmtDate(p.date))}${p.minutes?`, ${esc(p.minutes)} min`:''}</p>${stateTag(p)} ${done?`${tag(p.sync)} <span class="muted" style="font-size:14px">${SYNC[p.sync][2]}</span>`:'<span class="muted" style="font-size:14px">Not finished. Kept on this device and not synced.</span>'}</div>
+ <div class="actions" style="margin:0">${p.sync==='conflict'?`<button class="primary" onclick="resolveAsk('${p.id}')">Choose version<span class="vh"> for ${esc(p.title)}</span></button>`:''}${done?`<a class="btn" href="#plan/${p.id}">Open<span class="vh"> ${esc(p.title)}</span></a>`:`<button class="primary" onclick="editPlan('${p.id}')">Continue draft<span class="vh"> ${esc(p.title)}</span></button>`}</div></div>`}
+function plans(){const all=plansSvc.list(),drafts=all.filter(p=>p.status!=='Completed'),done=all.filter(p=>p.status==='Completed');
+ $('main').innerHTML=`<div class="topline"><div><div class="eyebrow">Make time for discovery</div><h1 tabindex="-1">Your session plans</h1><p class="muted">Drafts are unfinished and stay on this device. Completed plans are ready to use and sync to the outreach unit.</p></div><a class="btn primary" href="#browse">Create a plan</a></div>
+ ${all.length?`${drafts.length?`<h2>Drafts (${drafts.length})</h2><div class="panel">${drafts.map(planRow).join('')}</div>`:''}
+ ${done.length?`<h2>Completed plans (${done.length})</h2><div class="panel">${done.map(planRow).join('')}</div>`:''}
+ ${!offline()&&done.some(p=>['pending','failed'].includes(p.sync))?'<div class="actions"><button class="primary" onclick="syncNow()">Sync now</button></div>':''}`
  :'<div class="empty"><h2>Your first session starts here</h2><p>Choose an activity, adapt the steps and save your plan.</p><a class="btn" href="#browse">Find an activity</a></div>'}`;return 'Session plans'}
-function plan(id){const p=data.plans.find(x=>x.id===id);if(!p)return missing();
+function plan(id){const p=plansSvc.get(id);if(!p)return missing();
+ if(p.status!=='Completed'){data.editing=id;persist();return editor()}
  const warn={failed:'<div class="msg err"><strong>Sync failed.</strong><p>Your plan is safe on this device. It will retry automatically, or select Retry now.</p></div>',
   conflict:`<div class="msg warn" style="border-color:#56297f;background:#eee5f6;color:#3c1c5a"><strong>A newer version of this plan exists.</strong><p>A coordinator changed it on another device after your last sync. Nothing has been overwritten.</p><div class="actions" style="margin-bottom:0"><button class="primary" onclick="resolveAsk('${id}')">Choose which version to keep</button></div></div>`};
- $('main').innerHTML=`<a class="back" href="#plans">Back to session plans</a><div class="eyebrow">Session ready</div><h1 tabindex="-1">${esc(p.title)}</h1>
- <p>${tag(p.sync)} <span class="muted">${SYNC[p.sync][2]}</span></p>${warn[p.sync]||''}
+ $('main').innerHTML=`<a class="back" href="#plans">Back to session plans</a><div class="eyebrow">Completed plan</div><h1 tabindex="-1">${esc(p.title)}</h1>
+ <p>${stateTag(p)} ${tag(p.sync)} <span class="muted">${SYNC[p.sync][2]}</span></p>${warn[p.sync]||''}
  ${offline()?'<div class="warning">Offline: this plan remains available on this device.</div>':''}${planContent(p)}
  <div class="actions"><button class="primary" onclick="editPlan('${id}')">Edit plan</button><a class="btn" href="#prepare/${id}">Assistant view</a>
  ${!offline()&&['pending','failed'].includes(p.sync)?`<button ${syncing?'disabled':''} onclick="syncNow()">${p.sync==='failed'?'Retry now':'Sync now'}</button>`:''}
  <button onclick="exportPlan('${id}')">Export plan</button><button onclick="window.print()">Print plan</button><button class="danger" onclick="deletePlan('${id}')">Delete plan</button></div>
  <form class="panel" id="partForm" onsubmit="return false"><fieldset style="border:0;padding:0;margin:0"><legend><h2 style="margin:0 0 8px">After the session: participation</h2></legend>
  <p class="hint" id="partHint">Enter counts only. There is nowhere to enter learners' names, and that is deliberate.</p><div class="formgrid">
- ${CATEGORIES.map(([k,l])=>`<div><label for="pc-${k}">${l}</label><input id="pc-${k}" type="text" inputmode="numeric" autocomplete="off" value="${esc(p.participation?.[k]??'')}" aria-describedby="partHint"><p class="error" id="pc-${k}-err" hidden>Enter a whole number, 0 or more.</p></div>`).join('')}
- </div></fieldset><p class="muted" id="partStatus"></p></form>
+ ${CATEGORIES.map(([k,l])=>`<div><label for="pc-${k}">${l}</label><input id="pc-${k}" type="text" inputmode="numeric" autocomplete="off" value="${esc(p.participation?.[k]??'')}" aria-describedby="partHint"><p class="error" id="pc-${k}-err" hidden></p></div>`).join('')}
+ </div></fieldset><p class="muted" id="partStatus" role="status"></p></form>
  <p class="muted">Synchronisation is simulated in this assessment prototype. Your data is stored on this browser only.</p>`;
- $('partForm').addEventListener('input',e=>{const el=e.target,k=el.id.slice(3),ok=/^\d*$/.test(el.value.trim());
-  $(el.id+'-err').hidden=ok;el.setAttribute('aria-invalid',String(!ok));el.setAttribute('aria-describedby',ok?'partHint':`${el.id}-err partHint`);if(!ok)return;
-  p.participation=p.participation||{};p.participation[k]=el.value.trim()===''?null:Number(el.value);
-  if(p.sync==='synced')p.sync='pending';persist();$('partStatus').textContent='Participation saved on this device.';status();clearTimeout(window.partT);window.partT=setTimeout(drain,1200)});
+ $('partForm').addEventListener('input',e=>{const el=e.target,k=el.id.slice(3),check=STEMValidation.validateCount(el.value),err=$(el.id+'-err');
+  err.hidden=check.valid;err.textContent=check.valid?'':check.error;el.setAttribute('aria-invalid',String(!check.valid));el.setAttribute('aria-describedby',check.valid?'partHint':`${el.id}-err partHint`);if(!check.valid)return;
+  const r=plansSvc.recordParticipation(id,k,el.value);$('partStatus').textContent=r.ok?'Participation saved on this device.':r.error;status();clearTimeout(window.partT);window.partT=setTimeout(drain,1200)});
  return p.title}
-function prepare(id){const p=data.plans.find(x=>x.id===id);if(!p)return missing();
+function prepare(id){const p=plansSvc.get(id);if(!p)return missing();
  $('main').innerHTML=`<a class="back no-print" href="#plan/${id}">Back to the plan</a><div class="eyebrow">For the person assisting</div><h1 tabindex="-1">Before learners arrive: ${esc(p.title)}</h1>
  <p class="muted">${esc(fmtDate(p.date))}, ${esc(p.venue)}, about ${esc(p.minutes)} minutes</p>
  <div class="panel"><h2>1. Set out these materials</h2><p class="hint">Tick each item as you lay it out. Ticks are not saved.</p>${lines(p.materials).map(m=>`<label class="choice"><input type="checkbox"> ${esc(m)}</label>`).join('')}</div>
  <div class="panel danger"><h2><span aria-hidden="true">⚠ </span>2. Safety: say this before starting</h2><p>${esc(p.safety)}</p></div>
  <div class="panel"><h2>3. Run the steps</h2><ol class="steps">${lines(p.steps).map(s=>`<li>${esc(s)}</li>`).join('')}</ol></div>
  <div class="panel"><h2>4. Include everyone</h2><p>${esc(p.inclusion)}</p></div><div class="actions"><button onclick="window.print()">Print this page</button></div>`;return 'Before learners arrive'}
-window.editPlan=id=>{data.draft={...data.plans.find(x=>x.id===id)};persist();go('editor')};
-window.exportPlan=id=>{const p=data.plans.find(x=>x.id===id);const content=`STEMMate Namibia: session plan\n${p.title}\n${fmtDate(p.date)}, ${p.venue}\n${p.level}, ${p.minutes} minutes\n\nMaterials\n${p.materials}\n\nSteps\n${p.steps}\n\nSafety\n${p.safety}\n\nInclusion\n${p.inclusion}\n`;
+window.editPlan=id=>{data.editing=id;persist();go('editor')};
+window.exportPlan=id=>{const p=plansSvc.get(id);const content=`STEMMate Namibia: session plan (${p.status})\n${p.title}\n${fmtDate(p.date)}, ${p.venue}\n${p.level}, ${p.minutes} minutes\n\nMaterials\n${p.materials}\n\nSteps\n${p.steps}\n\nSafety\n${p.safety}\n\nInclusion\n${p.inclusion}\n`;
  const url=URL.createObjectURL(new Blob([content],{type:'text/plain;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='STEMMate-session-plan.txt';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);notify('Plan exported as a text file.','ok')};
-window.deletePlan=id=>{const p=data.plans.find(x=>x.id===id);const un=UNSYNCED.includes(p.sync);
- confirmAction('Delete plan',`This removes <strong>${esc(p.title)}</strong> from this device.${un?' <strong>It has not synced, so it cannot be recovered.</strong>':''} Export it first if you need a copy.`,()=>{data.plans=data.plans.filter(x=>x.id!==id);persist();notify('Plan deleted from this device.');go('plans')})};
+window.deletePlan=id=>{const p=plansSvc.get(id);if(!p)return;const un=p.status!=='Completed'||UNSYNCED.includes(p.sync);
+ confirmAction('Delete plan',`This removes <strong>${esc(p.title||'this plan')}</strong> from this device.${un?' <strong>It has not synced, so it cannot be recovered.</strong>':''} Export it first if you need a copy.`,()=>{const r=plansSvc.remove(id);if(!r.ok){notify(esc(r.error),'err');return}if(data.editing===id){data.editing=null;persist()}notify('Plan deleted from this device.');go('plans')})};
 
-/* ---------- Sync queue (FR-05; simulated server) ---------- */
+/* ---------- Sync queue (FR-05; simulated server, outside the A4 slice) ---------- */
+function retryFailed(){plansSvc.list().forEach(p=>{if(p.sync==='failed')plansSvc.setSync(p.id,'pending')})}
 function drain(){if(offline()||syncing){status();return}
- const queue=data.plans.filter(p=>p.sync==='pending');if(!queue.length){status();return}
- syncing=true;queue.forEach(p=>p.sync='syncing');persist();refresh();
- setTimeout(()=>{syncing=false;
-  queue.forEach((p,i)=>{
-   if(offline()){p.sync='pending';return}
-   if(failNext){p.sync='failed'}
-   else if(conflictNext&&i===0){p.sync='conflict';conflictNext=false;announce(`${p.title}: a newer version exists. Choose which version to keep.`)}
-   else{p.sync='synced';p.version=(p.version||0)+1}});
+ const queue=plansSvc.list().filter(p=>p.status==='Completed'&&p.sync==='pending');if(!queue.length){status();return}
+ syncing=true;queue.forEach(p=>plansSvc.setSync(p.id,'syncing'));refresh();
+ setTimeout(()=>{syncing=false;let anySynced=false;
+  queue.forEach((q,i)=>{const p=plansSvc.get(q.id);if(!p||p.sync!=='syncing')return;
+   if(offline()){plansSvc.setSync(p.id,'pending');return}
+   if(failNext)plansSvc.setSync(p.id,'failed');
+   else if(conflictNext&&i===0){plansSvc.setSync(p.id,'conflict');conflictNext=false;announce(`${p.title}: a newer version exists. Choose which version to keep.`)}
+   else{plansSvc.setSync(p.id,'synced',{version:(p.version||0)+1});anySynced=true}});
   if(failNext){failNext=false;announce('Sync failed. Your plans are safe on this device. Retrying automatically.');
-   clearTimeout(retryTimer);retryTimer=setTimeout(()=>{data.plans.forEach(p=>{if(p.sync==='failed')p.sync='pending'});drain()},8000)}
-  else if(queue.some(p=>p.sync==='synced'))announce('Synchronised with the outreach unit.');
-  persist();refresh()},1300)}
-function refresh(){status();const r=(location.hash.slice(1)||'browse').split('/')[0];if(['plans','plan','guide'].includes(r)){const keep=$('notice').innerHTML;const f=document.activeElement&&document.activeElement.id;render(false);$('notice').innerHTML=keep;if(f&&$(f))$(f).focus()}}
-window.syncNow=()=>{data.plans.forEach(p=>{if(p.sync==='failed')p.sync='pending'});drain()};
-window.resolveAsk=id=>{const p=data.plans.find(x=>x.id===id);
+   clearTimeout(retryTimer);retryTimer=setTimeout(()=>{retryFailed();drain()},8000)}
+  else if(anySynced)announce('Synchronised with the outreach unit.');
+  refresh()},1300)}
+function refresh(){status();const r=(location.hash.slice(1)||'browse').split('/')[0];if(['plans','plan','guide'].includes(r)){const keep=$('notice').innerHTML,pending=keepNotice;const f=document.activeElement&&document.activeElement.id;keepNotice=true;render(false);keepNotice=pending;$('notice').innerHTML=keep;if(f&&$(f))$(f).focus()}}
+window.syncNow=()=>{retryFailed();drain()};
+window.resolveAsk=id=>{const p=plansSvc.get(id);
  openDialog(`<h2 id="dlgTitle">Choose which version to keep</h2><p>Coordinator C-02 changed <strong>${esc(p.title)}</strong> on another device after your last sync.</p>
  <ul><li>Your version: ${lines(p.steps).length} steps, ${esc(p.minutes)} minutes.</li><li>Their version: ${lines(p.steps).length} steps, ${Number(p.minutes)+10} minutes, one extra safety note.</li></ul>
  <p>Whichever you choose, the other version is not deleted.</p><div class="actions"><button class="primary" onclick="keepMine('${id}')">Keep my version</button><button onclick="openTheirs('${id}')">Open their version</button><button onclick="closeDialog()">Decide later</button></div>`)};
-window.keepMine=id=>{const p=data.plans.find(x=>x.id===id);closeDialog();p.version=(p.version||0)+1;p.sync='pending';persist();notify(`Keeping your version of <strong>${esc(p.title)}</strong>. Sending it now.`,'ok');render(false);drain()};
-window.openTheirs=id=>{const p=data.plans.find(x=>x.id===id);closeDialog();
- const copy={...JSON.parse(JSON.stringify(p)),id:'p'+Date.now(),title:p.title+' (your earlier copy)',sync:'local'};
- p.minutes=Number(p.minutes)+10;p.safety=p.safety+' Coordinator: confirm a first-aid kit is at the venue.';p.version=(p.version||0)+2;p.sync='synced';data.plans.push(copy);persist();
- notify(`Opened the coordinator's version. Your earlier version is kept on this device as <strong>${esc(copy.title)}</strong>.`,'ok');go('plan/'+p.id)};
-
+window.keepMine=id=>{const p=plansSvc.get(id);closeDialog();plansSvc.setSync(id,'pending',{version:(p.version||0)+1});notify(`Keeping your version of <strong>${esc(p.title)}</strong>. Sending it now.`,'ok');render(false);drain()};
+window.openTheirs=id=>{const p=plansSvc.get(id);closeDialog();
+ const copy=plansSvc.saveDraft({...p,title:p.title+' (your earlier copy)'}).plan;
+ plansSvc.setSync(id,'synced',{minutes:Number(p.minutes)+10,safety:p.safety+' Coordinator: confirm a first-aid kit is at the venue.',version:(p.version||0)+2});
+ notify(`Opened the coordinator's version. Your earlier version is kept on this device as a draft called <strong>${esc(copy.title)}</strong>.`,'ok');go('plan/'+id)};
 /* ---------- Dialogs ---------- */
 let opener=null;
 function openDialog(html){opener=document.activeElement;const d=$('dialog');d.innerHTML=html;d.showModal();const b=d.querySelector('button');if(b)b.focus()}
@@ -398,7 +420,7 @@ function confirmAction(title,text,action){openDialog(`<h2 id="dlgTitle">${title}
 
 /* ---------- Demo & help (test controls) ---------- */
 function guide(){const on=x=>x?' (set)':'';
- $('main').innerHTML=`<div class="eyebrow">Prototype v1.1</div><h1 tabindex="-1">Demo &amp; help</h1><p class="muted">Practise the complete workflows and explore what happens when the connection fails.</p>
+ $('main').innerHTML=`<div class="eyebrow">Prototype v2.0</div><h1 tabindex="-1">Demo &amp; help</h1><p class="muted">Practise the complete workflows and explore what happens when the connection fails.</p>
  <div class="panel"><h2>Connection and failure controls</h2><p>These controls simulate connectivity and the server. They do not turn off your actual connection.</p>
  <div class="actions"><button class="primary" onclick="toggleOffline()">${simulatedOffline?'Return to online mode':'Simulate going offline'}</button>
  <button onclick="interruptNext=true;notify('The next Save for offline will stop at 60%.');render(false)">Interrupt next save${on(interruptNext)}</button>
@@ -407,13 +429,13 @@ function guide(){const on=x=>x?' (set)':'';
  <p>${offline()?'Offline mode. Only saved activities can be opened.':'Online mode. All activities are available.'}</p></div>
  <div class="panel"><h2>Three workflows to demonstrate</h2><ol class="steps">
  <li><strong>Find and save:</strong> Browse activities, tick the materials you have, open an activity and choose Save for offline. Try Interrupt next save first to see the failure message.</li>
- <li><strong>Plan a session:</strong> Choose Create session plan, set a date, adapt the fields, review and save. Open the Assistant view, then record participation counts after the session.</li>
+ <li><strong>Plan a session:</strong> Choose Create session plan. It saves as a Draft straight away. Set a date, adapt the fields, then Review and complete to make it Completed. Open the Assistant view, then record participation counts after the session.</li>
  <li><strong>Recover from a failure:</strong> Simulate going offline, save a plan, then return online and watch it sync. Use Make next sync fail or Make next sync conflict, then resolve it. Finally, sign out with an unsynced plan to see the warning.</li></ol>
  <p>For validation: clear the session date or enter 0 minutes, then select Review session plan. The error links move focus to the field that needs attention.</p></div>
  <div class="panel"><h2>Offline and shared devices</h2><p>Saved activities, drafts and plans stay in this browser after refreshing. This HTML file contains the complete app and needs no internet connection to load. Signing out removes everything from this device and warns you first if anything has not synced.</p>
  <button class="danger" onclick="confirmAction('Reset all prototype data','This clears every account, plan and saved activity in this browser.',()=>{try{localStorage.removeItem(KEY)}catch{}data=fresh();persist();go('signin')})">Reset all prototype data</button></div>
  <details class="panel"><summary>Keyboard and accessibility guidance</summary><p>Use Tab and Shift+Tab to move between controls, Enter to follow links, and Space or Enter to press buttons. A skip link moves to the main content. Forms have visible labels, hints and field-level error messages. Status uses words and symbols as well as colour. The layout adapts to narrow screens and enlarged text.</p><p>This prototype has not been certified as WCAG compliant. The team records its own keyboard, contrast and reflow checks and consenting adult evaluation.</p></details>
- <details class="panel"><summary>Scope, version and AI disclosure</summary><p>v1.0 was built by the team with OpenAI ChatGPT/Codex coding assistance. A team member added the visual identity (logo, topic colours, activity icons, numbered steps) and the optional tutorial-video panel. v1.1 adds the requirements baseline gaps (materials filter, session date, interrupted save, sync conflict and automatic retry, shared-device sign-out, participation counts, assistant view) and accessibility fixes, with Anthropic Claude coding assistance. The six activities are fictional. No real server sync, accounts or classroom deployment is implemented.</p><p>The team must disclose both tools, the code used, verification and changes made. No participant feedback or individual contribution evidence has been generated.</p></details>`;return 'Demo and help'}
+ <details class="panel"><summary>Scope, version and AI disclosure</summary><p><strong>Version v2.0 (A4 vertical slice).</strong> The slice is creating and saving a session plan: screen, validation (src/validation.js), application logic (src/planService.js) and on-device storage (src/storage.js). Plans are either a Draft (saved, unfinished, not synced) or Completed (all required details present, queued to sync).</p><p>v1.0 was built by the team with OpenAI ChatGPT/Codex coding assistance. A team member added the visual identity and the optional tutorial-video panel. v1.1 added the A3 requirements baseline gaps and accessibility fixes, and v2.0 split the plan feature into tested modules, both with Anthropic Claude coding assistance. The six activities and the accounts are fictional. Synchronisation is simulated; no real server, accounts or classroom deployment exist.</p><p>No participant feedback, test result or individual contribution has been generated by AI.</p></details>`;return 'Demo and help'}
 window.toggleOffline=()=>{simulatedOffline=!simulatedOffline;notify(simulatedOffline?'Offline simulation on. Your local work is safe.':'Back online. Waiting plans will sync now.');render(false);if(!simulatedOffline)drain()};
 
 function missing(){$('main').innerHTML='<h1 tabindex="-1">Page not found</h1><a class="btn" href="#browse">Browse activities</a>';return 'Page not found'}

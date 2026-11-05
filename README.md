@@ -1,43 +1,52 @@
-# STEMMate Namibia: accessible prototype (SDN621S A3)
+# STEMMate Namibia: A4 vertical slice
 
-Team: STEMmate GIT 
-Current version: **v1.1** (4 October 2026)
-Live prototype: [GitHub Pages link]
+Team: STEMmate GIT · SDN621S Software Design, 2026
+Release: **v2.0** (A4 slice, used for testing and evaluation)
+Live prototype: https://anonyatondo02-oss.github.io/stemmate-namibia-a3/
 
-STEMMate helps STEM facilitators find activities they can run with the materials on hand, keep them on a shared phone without signal, build a session plan, and sync it when the connection returns. This is an assessment prototype: all accounts, activities and plans are synthetic, and no learner data is collected.
+STEMMate helps STEM facilitators plan practical sessions with the materials they have, on shared phones with unreliable signal. The A4 vertical slice is **create and save a session plan**: screen, validation, application logic, on-device storage and a visible result. All accounts, activities and plans are synthetic; no learner data is collected.
 
-## How to view
-1. Open the live link in any current browser. No login or install is needed.
-2. Phone width shows the mobile layout; a wider window shows the sidebar layout.
-3. Sign in as **Facilitator F-01** or **F-02**. These are fictional accounts with no password.
-4. Fallback: download `index.html` and open it directly. It works offline once loaded.
+## Run it
+- **Online:** open the live link above. No login or install.
+- **Offline:** download this repository, keep the folder structure, and double-click `index.html`. It runs from the files with no internet connection.
+- Sign in as **Facilitator F-01** or **F-02** (fictional, no password).
 
-## Workflows to try
-1. **Find and save offline (W1):** Browse activities, tick the materials you have, open an activity, then select *Save for offline*.
-2. **Build and hand over a plan (W2):** *Create session plan*, set a date, review and save, open the *Assistant view*, then record participation counts.
-3. **Offline, failure and recovery (W3):** on *Demo & help*, simulate going offline, interrupt a save, make the next sync fail or conflict, then sign out with an unsynced plan.
+## Try the slice
+1. Browse activities, open one, select **Create session plan**. It is saved straight away as a **Draft**.
+2. Close the tab and reopen the app. The draft is still in **Session plans** under Drafts.
+3. **Continue draft**, leave the date empty and select **Review and complete**: the errors are listed and shown next to each field, and the work stays saved as a Draft.
+4. Fill in the date, **Review and complete**, then **Mark plan completed**. The plan is now **Completed** and queued to sync.
+5. Record participation counts on the completed plan (numbers only).
+6. Use **Demo & help** to simulate going offline, a failed sync or a version conflict.
 
-*Demo & help* also has *Reset all prototype data* to start again. Data is stored only in this browser.
+## Run the automated tests
+Requires Node.js 20 or later (nodejs.org). No other installs.
+```
+node --test
+```
+or `npm test`. Expected: 12 tests, 12 pass.
 
-## Keyboard use
-Tab and Shift+Tab move between controls, Enter follows links, and Space or Enter presses buttons. A skip link jumps to the main content.
+## Structure
+| Path | Purpose |
+|---|---|
+| `index.html` | Screens and interaction |
+| `src/validation.js` | Required-field, date, duration and participation-count rules (FR-03, FR-06) |
+| `src/planService.js` | Draft and Completed logic, participation, sync state (FR-03, FR-04) |
+| `src/storage.js` | Plan Repository over device storage; error results instead of crashes (FR-04, QR-02) |
+| `tests/` | Automated tests T01 to T08 from the team test matrix |
+| `alt/visual-layer.html` | A team member's alternative visual design, merged into v1.1 |
 
-## Version history
-| Version | Date | Change |
-|---|---|---|
-| v1.1 | 4 Oct 2026 | Added materials filter, session date, interrupted save, sync conflict and auto-retry, shared-device sign-out, participation counts, assistant view; 8 accessibility fixes; visual layer merged |
-| v1.0 | 3 Oct 2026 | First team build: browse, save, plan, review, export |
+## Versions
+| Version | Change |
+|---|---|
+| v2.0 | A4 slice: plan feature split into tested modules; Draft vs Completed states; completion message kept on screen |
+| v1.1 | A3 release: baseline gaps, accessibility fixes, visual layer merged |
+| v1.0 | First team build |
 
-`alt/visual-layer.html` is a team member's alternative visual design, kept for the record. Its visual elements were merged into v1.1.
-
-## Team
-| Student number | Name | Role |
-|---|---|---|
-| 224023438 | Shealtiel Nyatondo | Developer/Project management |
-| 223039071 | Elsie Waendama | UX/UI |
-| 221078568 | Shintama Kandalindishiwo | Testing |
-| 225050455 | Chosen Kamwi | Documentation |
-| 224064584 | Veueza Kavetuna | Requirements/Architecture |
+## Known limitations
+- Synchronisation with the outreach unit is simulated; there is no server.
+- Plans live in this browser only. Clearing browser data deletes them; use **Export plan** to keep a copy.
+- Accounts are fictional and have no passwords.
 
 ## AI use
-v1.0 was built with OpenAI ChatGPT/Codex coding assistance. v1.1 changes were made with Anthropic Claude coding assistance. Full declaration in the team report.
+v1.0 was built with OpenAI ChatGPT/Codex coding assistance. v1.1 and v2.0 changes were made with Anthropic Claude coding assistance. Full declaration in the team report.

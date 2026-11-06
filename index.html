@@ -6,6 +6,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='14' fill='%23dcf36b'/%3E%3Cpath d='M21 16.5C21 11.5 8.5 11.5 8.5 18.5C8.5 25 21.5 23 21.5 30.5C21.5 37 8 36.5 7.5 31' fill='none' stroke='%23153e36' stroke-width='4.2' stroke-linecap='round'/%3E%3Cpath d='M26.5 35V14L34 26.5L41.5 14V35' fill='none' stroke='%23153e36' stroke-width='4.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='34' cy='34' r='2.6' fill='%23e8743b'/%3E%3C/svg%3E">
 <meta name="theme-color" content="#153e36">
 <title>STEMMate Namibia</title>
+<script>(function(){var p='system';try{p=localStorage.getItem('stemmate-theme')||'system'}catch(e){}var d=p==='dark'||(p==='system'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.setAttribute('data-theme',d?'dark':'light')})();</script>
 <style>
 :root{font-family:Arial,Helvetica,sans-serif;color:#182f2a;background:#f2f5f4;font-size:16px;line-height:1.55;--green:#153e36;--muted:#526860}
 *{box-sizing:border-box}body{margin:0}a{color:inherit}
@@ -115,6 +116,64 @@ nav a{position:relative}nav a.active:before{content:"";position:absolute;left:-1
 .detailgrid .vidcard{flex-direction:column;align-items:start;gap:14px}.detailgrid .play{width:52px;height:52px}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}.card:hover{transform:none}}
 @media print{aside,header,footer,.actions,.back,#notice,.no-print{display:none!important}.workspace{margin:0}main{padding:0}.panel{border:0;padding:10px}.detailgrid{display:block}}
+/* v2.1 F2: the whole card opens the activity (one link, stretched over the card) */
+.card{position:relative;transition:box-shadow .15s}.card:hover{box-shadow:0 4px 14px rgba(21,62,54,.18)}
+.card .cardlink::after{content:"";position:absolute;inset:0;border-radius:12px}
+.card .cardlink:focus-visible{outline:none}.card:focus-within{outline:3px solid #ab5800;outline-offset:3px}
+.missing{font-size:14px;color:#6b4100;background:#fff2d9;border-radius:6px;padding:6px 9px;margin:0 0 14px}
+.resultsHead{grid-column:1/-1;margin:8px 0 0;font-size:19px}
+/* v2.1 F4: columns no longer stretch to the same height */
+.detailgrid{align-items:start}
+.explain{margin:10px 0 0;padding-left:18px}.explain li{margin:4px 0}
+.steps.pics li.pic{display:grid;grid-template-columns:minmax(150px,220px) 1fr;gap:16px;align-items:start;margin-bottom:22px}
+.stepart{margin:0}.stepart svg{display:block;width:100%;height:auto}
+@media (max-width:560px){.steps.pics li.pic{grid-template-columns:1fr}.stepart svg{max-width:320px}}
+.daypick .chips{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0}.daychip{min-height:44px;padding:6px 12px}.daychip[aria-pressed="true"]{background:var(--green);color:#fff}
+
+/* v2.1: dark mode (requested at evaluation). Applied when the person chooses Dark, or when the phone is set to dark and they have not chosen. */
+html[data-theme="dark"]{color-scheme:dark}
+html[data-theme="dark"] :root,html[data-theme="dark"]{--green:#0a0a0a;--muted:#b3b3b3;--sf:#1c1c1c;--sf2:#262626;--bd:#3a3a3a;--tx:#ececec}
+html[data-theme="dark"] body,html[data-theme="dark"]{background:#121212;color:var(--tx)}
+html[data-theme="dark"] header,html[data-theme="dark"] .filters,html[data-theme="dark"] .card,html[data-theme="dark"] .panel,html[data-theme="dark"] .empty,html[data-theme="dark"] dialog,html[data-theme="dark"] .skip{background:var(--sf);color:var(--tx);border-color:var(--bd)}
+html[data-theme="dark"] aside{background:#0a0a0a;border-right:1px solid var(--bd)}
+html[data-theme="dark"] button,html[data-theme="dark"] .btn{background:var(--sf2);color:#ececec;border-color:#555}
+html[data-theme="dark"] button:hover,html[data-theme="dark"] .btn:hover{background:#333}
+html[data-theme="dark"] button.primary,html[data-theme="dark"] .btn.primary,html[data-theme="dark"] .daychip[aria-pressed="true"]{background:#ececec;color:#121212;border-color:#ececec}
+html[data-theme="dark"] button.primary:hover,html[data-theme="dark"] .btn.primary:hover{background:#fff}
+html[data-theme="dark"] button.danger{color:#ffaaa3;border-color:#ffaaa3}
+html[data-theme="dark"] input,html[data-theme="dark"] select,html[data-theme="dark"] textarea{background:#121212;color:var(--tx);border-color:#666}
+html[data-theme="dark"] [aria-invalid="true"]{border-color:#ffaaa3}
+html[data-theme="dark"] .error{color:#ffaaa3}
+html[data-theme="dark"] a:focus-visible,html[data-theme="dark"] button:focus-visible,html[data-theme="dark"] input:focus-visible,html[data-theme="dark"] select:focus-visible,html[data-theme="dark"] textarea:focus-visible,html[data-theme="dark"] summary:focus-visible,html[data-theme="dark"] h1:focus-visible{outline-color:#ffb066}
+html[data-theme="dark"] .card:focus-within{outline-color:#ffb066}
+html[data-theme="dark"] .status{background:var(--sf2);border-color:#555;color:var(--tx)}
+html[data-theme="dark"] .status.attn,html[data-theme="dark"] .warning,html[data-theme="dark"] .msg.warn,html[data-theme="dark"] .missing{background:#3a2c10;border-color:#bc861f;color:#ffd48a}
+html[data-theme="dark"] .success,html[data-theme="dark"] .msg.ok{background:#1a2a1d;border-color:#4f8a5a;color:var(--tx)}
+html[data-theme="dark"] .msg.err{background:#3a1513;border-color:#e0675e;color:#ffc2bd}
+html[data-theme="dark"] .msg.info{background:var(--sf2);border-color:#555;color:var(--tx)}
+html[data-theme="dark"] .intro{background:#1c1c1c;border-color:#3a3a3a}
+html[data-theme="dark"] .eyebrow{color:#c8c8c8}
+html[data-theme="dark"] .meta{color:#c0c0c0}
+html[data-theme="dark"] .back{color:#d0d0d0}
+html[data-theme="dark"] .tag{background:#2a2a2a;color:var(--tx)}
+html[data-theme="dark"] .row+.row,html[data-theme="dark"] th,html[data-theme="dark"] td{border-color:var(--bd)}
+html[data-theme="dark"] .s-draft,html[data-theme="dark"] .s-local{color:#e0e0e0;background:#2a2a2a}
+html[data-theme="dark"] .s-pending,html[data-theme="dark"] .s-syncing{color:#ffd48a;background:#3a2c10}
+html[data-theme="dark"] .s-synced,html[data-theme="dark"] .s-saved,html[data-theme="dark"] .s-done{color:#a6e3b5;background:#16261a}
+html[data-theme="dark"] .s-failed{color:#ffaaa3;background:#3a1513}
+html[data-theme="dark"] .s-conflict{color:#dcbef5;background:#2c1a3d}
+html[data-theme="dark"] .t-science{--tb:#1f1f1f;--ti:#93e2bc}
+html[data-theme="dark"] .t-mathematics{--tb:#1f1f1f;--ti:#a7d5f4}
+html[data-theme="dark"] .t-engineering{--tb:#1f1f1f;--ti:#ffb88f}
+html[data-theme="dark"] .t-technology{--tb:#1f1f1f;--ti:#f2d56f}
+html[data-theme="dark"] .stepart svg{border-radius:10px}
+html[data-theme="dark"] .choice input,html[data-theme="dark"] progress{accent-color:#ececec}
+html[data-theme="dark"] nav a.active{background:#262626;color:#fff}html[data-theme="dark"] .asidebottom{border-color:#3a3a3a}html[data-theme="dark"] .brand small,html[data-theme="dark"] .navlabel,html[data-theme="dark"] .asidebottom p,html[data-theme="dark"] .asidebottom small{color:#b3b3b3}
+html[data-theme="dark"] .vidcard,html[data-theme="dark"] .video{background:#1c1c1c;background-image:none}
+html[data-theme="dark"] .card:hover{box-shadow:0 4px 14px rgba(0,0,0,.6)}
+html[data-theme="dark"] dialog::backdrop{background:#000000b3}
+.themebtn{min-height:36px;padding:6px 12px;font-size:14px}
+[hidden]{display:none!important}
 </style>
 </head>
 <body>
@@ -128,32 +187,35 @@ nav a{position:relative}nav a.active:before{content:"";position:absolute;left:-1
     <a href="#plans"><span aria-hidden="true">▤ &nbsp;</span>Session plans <span class="count" id="planCount"></span></a>
     <a href="#guide"><span aria-hidden="true">? &nbsp;</span>Demo &amp; help</a>
   </nav>
-  <div class="asidebottom"><strong>Small resources.<br>Big discoveries.</strong><p>Plan practical STEM sessions with materials you already have.</p><small>Accessible prototype, v2.0</small></div>
+  <div class="asidebottom"><strong>Small resources.<br>Big discoveries.</strong><p>Plan practical STEM sessions with materials you already have.</p><small>Accessible prototype, v2.1</small></div>
 </aside>
 <div class="workspace">
   <header>
     <span>Facilitator workspace</span>
     <div class="hdr">
-      <a id="status" class="status" href="#plans"></a>
+      <a id="status" class="status" href="#plans" hidden>● Online</a>
+      <button type="button" id="themeBtn" class="themebtn" onclick="toggleTheme()" aria-pressed="false">☾ Dark mode</button>
       <span id="who"></span>
       <button type="button" id="signoutBtn" onclick="signoutAsk()" hidden>Sign out</button>
     </div>
   </header>
   <div id="notice" role="status" aria-live="polite"></div>
   <main id="main" tabindex="-1"></main>
-  <footer>STEMMate Namibia prototype v2.0 (A4 slice). Synthetic activities and accounts. No learner personal information is collected.</footer>
+  <footer>STEMMate Namibia prototype v2.1 (A4 slice, after evaluation). Synthetic activities and accounts. No learner personal information is collected.</footer>
 </div>
 <div class="vh" id="announcer" aria-live="polite"></div>
-<dialog id="dialog" aria-labelledby="dlgTitle"></dialog>
+<dialog id="dialog"></dialog>
 
 <script src="src/validation.js"></script>
 <script src="src/storage.js"></script>
 <script src="src/planService.js"></script>
+<script src="src/activityFilter.js"></script>
+<script src="src/stepArt.js"></script>
 <script>
 "use strict";
 /* ---------- Activity content (synthetic; kept as data, separate from the interface) ---------- */
 const activities=[
-{id:'bridge',title:'Build a paper bridge',topic:'Engineering',level:'Upper primary',minutes:35,sizeKB:120,symbol:'△',desc:'Explore strong shapes by building a bridge from paper and testing its load.',materials:['Paper','Reused cardboard','Coins','Tape'],goal:'Compare how folds and triangular supports change the strength of a bridge.',steps:['Discuss bridges and predict which paper shape will carry the most coins. (5 min)','Place two cardboard supports 15 cm apart. Fold one sheet into an accordion and lay it across the gap. (10 min)','Add coins one at a time. Record the load. Try a flat sheet and compare. (15 min)','Discuss how using less material can still make a stronger bridge. (5 min)'],safety:'Use blunt scissors with adult supervision. Keep coins away from mouths.',inclusion:'Offer pre-folded paper, allow paired roles, and describe each test aloud.'},
+{id:'bridge',title:'Build a paper bridge',topic:'Engineering',level:'Upper primary',minutes:35,sizeKB:120,symbol:'△',desc:'Explore strong shapes by building a bridge from paper and testing its load.',materials:['Paper','Reused cardboard','Coins','Tape'],goal:'Compare how folds and triangular supports change the strength of a bridge.',steps:['Show a picture or drawing of a real bridge. Ask: which paper shape will carry the most coins, flat or folded? Write down the predictions. (5 min)','Make two supports the same height, for example two stacks of books or two folded blocks of reused cardboard. Place them 15 cm apart on a table. (5 min)','Test a flat sheet first: lay one sheet of paper across the gap and add coins to the middle one at a time until it sags to the table. Write down the number of coins. (5 min)','Fold a second sheet into an accordion: fold about 1 cm forward, then 1 cm back, along the long side until the whole sheet is pleated. Lay it across the same gap; tape each end to a support if it slides. (5 min)','Add coins to the middle of the folded bridge one at a time and count until it collapses. Write down the number and compare it with the flat sheet. (10 min)','Discuss: the folds stand up like many small walls, so the same piece of paper becomes stiffer and holds more. Where do we see folded or triangle shapes in real structures? (5 min)'],safety:'Use blunt scissors with adult supervision. Keep coins away from mouths.',inclusion:'Offer pre-folded paper, allow paired roles, and describe each test aloud.'},
 {id:'water',title:'Make a water filter',topic:'Science',level:'Upper primary',minutes:40,sizeKB:180,symbol:'≋',desc:'Investigate how layers of local materials separate particles from water.',materials:['Reused bottle','Sand','Gravel','Cloth'],goal:'Explain why different layers trap different sizes of particles.',steps:['Compare clear and muddy water without tasting either. (5 min)','An adult cuts the bottle. Place cloth, sand and washed gravel in the inverted top. (10 min)','Pour a small amount of muddy water through the layers into a container. (15 min)','Compare appearance and discuss why filtered water is still unsafe to drink. (10 min)'],safety:'An adult handles bottle cutting. Do not drink any water from this activity. Wash hands afterwards.',inclusion:'Use stable containers and large scoops. Describe appearance verbally and let partners pour.'},
 {id:'shadow',title:'Measure moving shadows',topic:'Mathematics',level:'Lower primary',minutes:30,sizeKB:64,symbol:'∠',desc:'Use a stick and simple measurements to discover how shadows change.',materials:['Stick','String','Chalk'],goal:'Compare lengths and explain that shadows change as the Sun appears to move.',steps:['Find a safe flat outdoor space and place a stick upright. (5 min)','Mark the shadow tip with chalk. Measure the length with string. (10 min)','Return later in the day to mark a new tip and compare lengths. (10 min)','Draw and describe the changes. (5 min)'],safety:'Do not look directly at the Sun. Use shade for discussion and provide drinking water.',inclusion:'Use tactile string lengths and verbal descriptions. Offer an indoor lamp alternative.'},
 {id:'circuit',title:'Light up a simple circuit',topic:'Technology',level:'Secondary',minutes:45,sizeKB:110,symbol:'⊕',desc:'Connect a low-voltage battery and bulb to explore complete circuits.',materials:['Battery','Small bulb','Wires','Tape'],goal:'Distinguish an open circuit from a closed circuit using a working model.',steps:['Identify the battery, bulb and connecting wires. (5 min)','Connect a 1.5 V battery to a compatible bulb with two wires. (15 min)','Open one connection and predict what happens. Reconnect it. (15 min)','Draw the circuit and explain the complete path. (10 min)'],safety:'Use only low-voltage batteries. Never use mains electricity. Disconnect if wires or battery become warm.',inclusion:'Use large connectors and paired assembly roles; describe the bulb state verbally.'},
@@ -184,10 +246,16 @@ const UNSYNCED=['local','pending','syncing','failed','conflict'];
 
 /* ---------- State ---------- */
 const KEY='stemmate-v2';
+function applyThemeLabel(){const dk=document.documentElement.getAttribute('data-theme')==='dark',b=document.getElementById('themeBtn');if(!b)return;b.textContent=dk?'☀ Light mode':'☾ Dark mode';b.setAttribute('aria-pressed',String(dk));b.setAttribute('aria-label',dk?'Switch to light mode':'Switch to dark mode');const m=document.querySelector('meta[name=theme-color]');if(m)m.content=dk?'#0a0a0a':'#153e36'}
+window.toggleTheme=()=>{const dk=document.documentElement.getAttribute('data-theme')!=='dark';document.documentElement.setAttribute('data-theme',dk?'dark':'light');try{localStorage.setItem('stemmate-theme',dk?'dark':'light')}catch(e){}applyThemeLabel()};
+try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',e=>{let p='system';try{p=localStorage.getItem('stemmate-theme')||'system'}catch(_){}if(p==='system'){document.documentElement.setAttribute('data-theme',e.matches?'dark':'light');applyThemeLabel()}})}catch(e){}
+applyThemeLabel();
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const lines=t=>String(t||'').split('\n').map(x=>x.trim()).filter(Boolean);
-const fmtDate=d=>d?new Date(d+'T00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):'No date set';
+const fmtDate=d=>{if(!d)return 'No date set';const x=new Date(d+'T00:00');if(isNaN(x))return d;return x.toLocaleDateString('en-GB',{weekday:'long'})+', '+String(x.getDate()).padStart(2,'0')+'/'+String(x.getMonth()+1).padStart(2,'0')+'/'+x.getFullYear()};
+const isoDay=x=>x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');
+function dayPicker(cur){const t=new Date();t.setHours(0,0,0,0);let b='';for(let i=0;i<7;i++){const x=new Date(t);x.setDate(t.getDate()+i);const v=isoDay(x),lab=x.toLocaleDateString('en-GB',{weekday:'short'})+' '+String(x.getDate()).padStart(2,'0')+'/'+String(x.getMonth()+1).padStart(2,'0');b+=`<button type="button" class="daychip" data-day="${v}" aria-pressed="${v===cur}">${i===0?'Today':i===1?'Tomorrow':lab}</button>`}return `<div class="daypick" role="group" aria-labelledby="daypickLbl"><p class="hint" id="daypickLbl">Or choose a day this week:</p><div class="chips">${b}</div><p class="muted" id="dateShown" aria-live="polite">${cur?'Planned for '+fmtDate(cur):'No date chosen yet'}</p></div>`}
 const fresh=()=>({user:null,saved:[],editing:null});
 let data=fresh(),storageOK=true;
 try{const prev=JSON.parse(localStorage.getItem(KEY));if(prev&&Array.isArray(prev.saved))data={...data,...prev}}catch{storageOK=false}
@@ -230,7 +298,7 @@ window.signoutAsk=()=>{const un=unsyncedItems();
 window.doSignout=()=>{closeDialog();plansSvc.clear();data=fresh();persist();notify('<strong>Signed out.</strong> Plans, drafts and saved activities were removed from this device.','ok');go('signin')};
 
 /* ---------- Browse and filter (FR-01) ---------- */
-function card(a){return `<article class="card t-${a.topic.toLowerCase()}"><div class="cardhead"><span class="symbol" aria-hidden="true">${icon(a.id)}</span><span class="topic">${a.topic}</span></div><div class="cardbody"><div class="meta">${a.level}, ${a.minutes} min</div>${data.saved.includes(a.id)?`<p>${tag('saved')}</p>`:''}<h2>${a.title}</h2><p>${a.desc}</p><p class="meta">Needs: ${a.materials.join(', ')}</p><a class="btn" href="#activity/${a.id}">View ${a.title.toLowerCase()}</a></div></article>`}
+function card(a,missing){return `<article class="card t-${a.topic.toLowerCase()}"><div class="cardhead"><span class="symbol" aria-hidden="true">${icon(a.id)}</span><span class="topic">${a.topic}</span></div><div class="cardbody"><div class="meta">${a.level}, ${a.minutes} min</div>${data.saved.includes(a.id)?`<p>${tag('saved')}</p>`:''}<h2>${a.title}</h2><p>${a.desc}</p><p class="meta">Needs: ${a.materials.join(', ')}</p>${missing?`<p class="missing"><strong>Missing:</strong> ${missing.map(esc).join(', ')}</p>`:''}<a class="btn cardlink" href="#activity/${a.id}">View ${a.title.toLowerCase()}</a></div></article>`}
 SYNC.saved=['✓','Saved offline',''];
 function browse(saved=false){
  $('main').innerHTML=`<div class="eyebrow">${saved?'Ready when you are':'Explore. Make. Discover.'}</div><div class="topline"><div><h1 tabindex="-1">${saved?'Your offline activities':'Find your next STEM activity'}</h1><p class="muted">${saved?'Saved on this device, ready to use without a connection.':'Practical ideas for curious minds. Start with what you have.'}</p></div><span class="tag">${saved?data.saved.length:activities.length} activities</span></div>
@@ -240,17 +308,19 @@ function browse(saved=false){
  <div><label for="topic">Topic</label><select id="topic"><option value="">All topics</option>${['Science','Mathematics','Engineering','Technology'].map(t=>`<option>${t}</option>`).join('')}</select></div>
  <div><label for="level">Level</label><select id="level"><option value="">All levels</option>${LEVELS.map(t=>`<option>${t}</option>`).join('')}</select></div>
  <div><label for="duration">Time available</label><select id="duration"><option value="">Any duration</option><option value="30">30 min or less</option><option value="45">45 min or less</option><option value="60">60 min or less</option></select></div>
- <fieldset><legend>Materials you have on hand</legend><p class="hint" id="matHint">Tick what you have. Only activities you can run with these materials will show. Tick nothing to see all.</p>
+ <fieldset><legend>Materials you have on hand</legend><p class="hint" id="matHint">Tick what you have. You will see activities you can run now, then activities that need only a few more items, with what is missing. Tick nothing to see all.</p>
  <div class="mats">${ALL_MATERIALS.map(m=>`<label class="choice"><input type="checkbox" name="mat" value="${esc(m)}" aria-describedby="matHint"> ${esc(m)}</label>`).join('')}</div></fieldset></form>
  <p id="results" class="muted" role="status"></p><div id="cards" class="grid"></div>`;
  $('search').value=fstate.q;$('topic').value=fstate.topic;$('level').value=fstate.level;$('duration').value=fstate.duration;
  document.querySelectorAll('input[name=mat]').forEach(c=>c.checked=fstate.mats.includes(c.value));
  function filter(){
   fstate={q:$('search').value,topic:$('topic').value,level:$('level').value,duration:$('duration').value,mats:[...document.querySelectorAll('input[name=mat]:checked')].map(c=>c.value)};
-  const q=fstate.q.toLowerCase();
-  const matches=activities.filter(a=>(!saved||data.saved.includes(a.id))&&(!offline()||data.saved.includes(a.id))&&(!q||[a.title,a.topic,...a.materials].join(' ').toLowerCase().includes(q))&&(!fstate.topic||a.topic===fstate.topic)&&(!fstate.level||a.level===fstate.level)&&(!fstate.duration||a.minutes<=Number(fstate.duration))&&(!fstate.mats.length||a.materials.every(m=>fstate.mats.includes(m))));
-  $('results').textContent=`${matches.length} ${matches.length===1?'activity':'activities'} available${offline()?' offline':''}`;
-  $('cards').innerHTML=matches.length?matches.map(card).join(''):`<div class="empty full"><h2>${offline()?'No saved activities match':'No activities match'}</h2><p>${offline()?'Go online and save an activity before your session.':fstate.mats.length?'No activity can be run with only the materials ticked. Tick more materials or clear filters.':'Try a different topic, level or search.'}</p><button type="button" onclick="resetFilters()">Clear filters</button></div>`}
+  const pool=activities.filter(a=>(!saved||data.saved.includes(a.id))&&(!offline()||data.saved.includes(a.id)));
+  const {ready,partly}=STEMFilter.matchActivities(pool,{q:fstate.q,topic:fstate.topic,level:fstate.level,maxMinutes:fstate.duration,materials:fstate.mats});
+  const total=ready.length+partly.length;
+  $('results').textContent=fstate.mats.length?`${ready.length} ready to run with what you have, ${partly.length} need a few more items${offline()?' (offline)':''}`:`${ready.length} ${ready.length===1?'activity':'activities'} available${offline()?' offline':''}`;
+  if(!total){$('cards').innerHTML=`<div class="empty full"><h2>${offline()?'No saved activities match':'No activities match'}</h2><p>${offline()?'Go online and save an activity before your session.':fstate.mats.length?'None of our '+activities.length+' activities can be run with only the materials you ticked.'+(()=>{const sg=STEMFilter.suggestMaterials(activities,{q:fstate.q,topic:fstate.topic,level:fstate.level,maxMinutes:fstate.duration,materials:fstate.mats});return sg.length?' Ticking '+sg.map(x=>x.material+' ('+x.count+(x.count>1?' activities':' activity')+')').join(', ')+' would show more.':' Try clearing the topic, level or time filters.'})()+' More activities will be added to the catalogue over time.':'Try a different topic, level or search.'}</p><button type="button" onclick="resetFilters()">Clear filters</button></div>`;return}
+  $('cards').innerHTML=(fstate.mats.length&&ready.length?'<h2 class="resultsHead">Ready to run with what you have</h2>':'')+ready.map(a=>card(a)).join('')+(partly.length?`<h2 class="resultsHead">Needs a few more items</h2>${partly.map(x=>card(x.activity,x.missing)).join('')}`:'')}
  window.resetFilters=()=>{fstate={q:'',topic:'',level:'',duration:'',mats:[]};browse(saved);$('search').focus()};
  $('main').querySelector('.filters').addEventListener('input',filter);$('main').querySelector('.filters').addEventListener('change',filter);filter();
  return saved?'Offline activities':'Browse activities'}
@@ -261,8 +331,8 @@ function activity(id){const a=activities.find(x=>x.id===id);if(!a)return missing
  const saved=data.saved.includes(id);
  $('main').innerHTML=`<a class="back" href="#browse">Back to activities</a><div class="dtile t-${a.topic.toLowerCase()}" aria-hidden="true">${icon(a.id)}</div><div class="eyebrow">${a.topic}, ${a.level}</div><h1 tabindex="-1">${a.title}</h1><p class="muted">${a.desc}</p>
  <div id="dl">${saved?`<p>${tag('saved')} <span class="muted">All steps, materials, safety notes and inclusion prompts are on this device.</span></p>`:''}</div>
- <div class="actions"><button class="primary" onclick="startPlan('${id}')">Create session plan</button>${saved?`<button onclick="removeSaved('${id}')">Remove from this device</button>`:`<button id="saveBtn" onclick="saveActivity('${id}')">Save for offline (${a.sizeKB} KB)</button>`}</div>
- <div class="detailgrid"><div class="panel"><h2>What learners will discover</h2><p>${a.goal}</p><h2>Activity steps</h2><ol class="steps">${a.steps.map(s=>`<li>${s}</li>`).join('')}</ol></div>
+ <div class="actions"><button class="primary" onclick="startPlan('${id}')">Create lesson plan</button>${saved?`<button onclick="removeSaved('${id}')">Remove from this device</button>`:`<button id="saveBtn" onclick="saveActivity('${id}')">Save for offline (${a.sizeKB} KB)</button>`}</div>
+ <div class="detailgrid"><div class="panel"><h2>What learners will discover</h2><p>${a.goal}</p><h2>Activity steps</h2><p class="hint">Each step has a picture showing what it should look like.</p><ol class="steps pics">${a.steps.map((s,i)=>stepItem(a.id,i,s)).join('')}</ol></div>
  <div><div class="panel"><h2>Session essentials</h2><p>${a.minutes} minutes, ${a.level}</p><h3>Materials</h3><ul>${a.materials.map(m=>`<li>${m}</li>`).join('')}</ul><p class="muted">Reuse clean materials whenever possible.</p></div>
  <div class="panel danger"><h2><span aria-hidden="true">⚠ </span>Safety</h2><p>${a.safety}</p></div><div class="panel"><h2>Include everyone</h2><p>${a.inclusion}</p></div>${videoPanel(a)}</div></div>`;return a.title}
 const VIDEOS={bridge:'paper bridge STEM challenge for kids accordion fold',water:'DIY water filter experiment sand gravel kids',shadow:'measure shadow length with a stick sun movement kids experiment',circuit:'simple circuit battery bulb wire kids experiment',seed:'seed germination experiment for kids',wind:'wind powered car cardboard bottle caps kids STEM'};
@@ -276,7 +346,7 @@ window.saveActivity=id=>{const a=activities.find(x=>x.id===id),box=$('dl'),btn=$
  box.innerHTML=`<p id="dlLabel">Saving ${a.sizeKB} KB to this device…</p><progress id="dlBar" max="100" value="0" aria-labelledby="dlLabel"></progress>`;announce('Saving to this device.');
  let pct=0;const t=setInterval(()=>{pct+=10;if($('dlBar'))$('dlBar').value=pct;
   if(interrupt&&pct>=60){clearInterval(t);btn.disabled=false;btn.textContent='Try saving again';
-   box.innerHTML='<div class="msg err"><strong>Not saved. The transfer stopped at 60%.</strong><p>No partial copy was kept on this device. Select Try saving again.</p></div>';announce('Not saved. The transfer stopped at 60 percent. No partial copy was kept.');return}
+   box.innerHTML='<div class="msg err"><strong>Not saved. The transfer stopped at 60%.</strong><ul class="explain"><li><strong>What happened:</strong> the connection dropped before the whole activity arrived.</li><li><strong>Why nothing was kept:</strong> a half-saved activity could be missing steps or safety notes when you are at the site with no signal, so it is not kept.</li><li><strong>What to do:</strong> move to a better signal if you can, then select Try saving again.</li></ul></div>';announce('Not saved. The transfer stopped at 60 percent. No partial copy was kept.');return}
   if(pct>=100){clearInterval(t);data.saved.push(id);if(!persist()){data.saved=data.saved.filter(x=>x!==id);return}notify('<strong>Activity saved.</strong> You can now open it offline on this device.','ok');render()}},150)};
 window.removeSaved=id=>{data.saved=data.saved.filter(x=>x!==id);persist();notify('Removed from this device. You need a connection to open it again.');render()};
 window.startPlan=id=>{const a=activities.find(x=>x.id===id);
@@ -294,14 +364,14 @@ function editing(){return data.editing?plansSvc.get(data.editing):null}
 let reopenWarned=false;
 function editor(){const p=editing();reopenWarned=false;
  if(!p){$('main').innerHTML='<h1 tabindex="-1">Create a session plan</h1><p>Choose an activity to start planning.</p><a class="btn primary" href="#browse">Browse activities</a>';return 'Create a session plan'}
- $('main').innerHTML=`<a class="back" href="#plans">Back to session plans</a><div class="eyebrow">Plan your session</div><h1 tabindex="-1">Edit session plan</h1>
+ $('main').innerHTML=`<a class="back" href="#plans">Back to session plans</a><div class="eyebrow">Plan your session</div><h1 tabindex="-1">${p.title&&p.date?'Edit lesson plan':'Create lesson plan'}</h1>
  <p id="stateRow">${stateTag(p)} <span class="muted">${stateLine(p)}</span></p>
  <p class="muted">Adapt the activity to your group. You can save a draft at any time. Fields marked * are needed to complete the plan.</p>
  ${offline()?'<div class="warning"><strong>You are offline.</strong><p>Your work stays on this device and syncs after you complete it.</p></div>':''}
  <div id="errors"></div>
  <form id="planForm" class="panel" novalidate><div class="formgrid">
  ${field('title','Session title',p.title)}
- ${field('date','Session date',p.date,'date')}
+ <div>${field('date','Session date',p.date,'date')}${dayPicker(p.date)}</div>
  <div><label for="venue">Venue type</label><p class="hint" id="venue-hint">Choose a type of place. Do not enter a school name.</p><select id="venue" name="venue" aria-describedby="venue-hint">${VENUES.map(v=>`<option ${v===p.venue?'selected':''}>${v}</option>`).join('')}</select></div>
  <div><label for="level">Learning level *</label><select id="level" name="level">${LEVELS.map(l=>`<option ${l===p.level?'selected':''}>${l}</option>`).join('')}</select></div>
  ${field('minutes','Total time in minutes',p.minutes,'number')}
@@ -313,6 +383,9 @@ function editor(){const p=editing();reopenWarned=false;
  </div><p id="draftStatus" class="muted">Changes save automatically as a draft on this device.</p>
  <div class="actions"><button type="submit" class="primary">Review and complete</button><button type="button" onclick="saveDraft()">Save draft</button><button type="button" class="danger" onclick="deletePlan('${p.id}')">Delete plan</button></div></form>`;
  $('planForm').addEventListener('input',()=>saveDraft(false));
+ const syncDay=()=>{const v=$('date').value;document.querySelectorAll('.daychip').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.day===v)));$('dateShown').textContent=v?'Planned for '+fmtDate(v):'No date chosen yet'};
+ $('date').addEventListener('input',syncDay);
+ document.querySelectorAll('.daychip').forEach(b=>b.addEventListener('click',()=>{$('date').value=b.dataset.day;syncDay();saveDraft(false)}));
  $('planForm').addEventListener('submit',e=>{e.preventDefault();const r=saveDraft(false);if(!r)return;
   const {errors}=STEMValidation.validatePlan(r.plan);showErrors(errors);if(Object.keys(errors).length)return;go('review')});
  return 'Edit session plan'}
@@ -356,7 +429,7 @@ function plans(){const all=plansSvc.list(),drafts=all.filter(p=>p.status!=='Comp
 function plan(id){const p=plansSvc.get(id);if(!p)return missing();
  if(p.status!=='Completed'){data.editing=id;persist();return editor()}
  const warn={failed:'<div class="msg err"><strong>Sync failed.</strong><p>Your plan is safe on this device. It will retry automatically, or select Retry now.</p></div>',
-  conflict:`<div class="msg warn" style="border-color:#56297f;background:#eee5f6;color:#3c1c5a"><strong>A newer version of this plan exists.</strong><p>A coordinator changed it on another device after your last sync. Nothing has been overwritten.</p><div class="actions" style="margin-bottom:0"><button class="primary" onclick="resolveAsk('${id}')">Choose which version to keep</button></div></div>`};
+  conflict:`<div class="msg warn" style="border-color:#56297f;background:#eee5f6;color:#3c1c5a"><strong>A newer version of this plan exists.</strong><p>A coordinator changed it on another device while you were offline. Nothing has been overwritten. Choose which version to keep; the dialog explains the difference.</p><div class="actions" style="margin-bottom:0"><button class="primary" onclick="resolveAsk('${id}')">Choose which version to keep</button></div></div>`};
  $('main').innerHTML=`<a class="back" href="#plans">Back to session plans</a><div class="eyebrow">Completed plan</div><h1 tabindex="-1">${esc(p.title)}</h1>
  <p>${stateTag(p)} ${tag(p.sync)} <span class="muted">${SYNC[p.sync][2]}</span></p>${warn[p.sync]||''}
  ${offline()?'<div class="warning">Offline: this plan remains available on this device.</div>':''}${planContent(p)}
@@ -377,7 +450,7 @@ function prepare(id){const p=plansSvc.get(id);if(!p)return missing();
  <p class="muted">${esc(fmtDate(p.date))}, ${esc(p.venue)}, about ${esc(p.minutes)} minutes</p>
  <div class="panel"><h2>1. Set out these materials</h2><p class="hint">Tick each item as you lay it out. Ticks are not saved.</p>${lines(p.materials).map(m=>`<label class="choice"><input type="checkbox"> ${esc(m)}</label>`).join('')}</div>
  <div class="panel danger"><h2><span aria-hidden="true">⚠ </span>2. Safety: say this before starting</h2><p>${esc(p.safety)}</p></div>
- <div class="panel"><h2>3. Run the steps</h2><ol class="steps">${lines(p.steps).map(s=>`<li>${esc(s)}</li>`).join('')}</ol></div>
+ <div class="panel"><h2>3. Run the steps</h2><ol class="steps pics">${lines(p.steps).map((s,i)=>{const act=activities.find(x=>x.id===p.activityId);return act&&act.steps[i]===s?stepItem(act.id,i,s):`<li>${esc(s)}</li>`}).join('')}</ol></div>
  <div class="panel"><h2>4. Include everyone</h2><p>${esc(p.inclusion)}</p></div><div class="actions"><button onclick="window.print()">Print this page</button></div>`;return 'Before learners arrive'}
 window.editPlan=id=>{data.editing=id;persist();go('editor')};
 window.exportPlan=id=>{const p=plansSvc.get(id);const content=`STEMMate Namibia: session plan (${p.status})\n${p.title}\n${fmtDate(p.date)}, ${p.venue}\n${p.level}, ${p.minutes} minutes\n\nMaterials\n${p.materials}\n\nSteps\n${p.steps}\n\nSafety\n${p.safety}\n\nInclusion\n${p.inclusion}\n`;
@@ -405,7 +478,7 @@ window.syncNow=()=>{retryFailed();drain()};
 window.resolveAsk=id=>{const p=plansSvc.get(id);
  openDialog(`<h2 id="dlgTitle">Choose which version to keep</h2><p>Coordinator C-02 changed <strong>${esc(p.title)}</strong> on another device after your last sync.</p>
  <ul><li>Your version: ${lines(p.steps).length} steps, ${esc(p.minutes)} minutes.</li><li>Their version: ${lines(p.steps).length} steps, ${Number(p.minutes)+10} minutes, one extra safety note.</li></ul>
- <p>Whichever you choose, the other version is not deleted.</p><div class="actions"><button class="primary" onclick="keepMine('${id}')">Keep my version</button><button onclick="openTheirs('${id}')">Open their version</button><button onclick="closeDialog()">Decide later</button></div>`)};
+ <p><strong>Why this happens:</strong> someone at the outreach unit edited this plan while your phone had no signal, so there are now two versions.</p><p><strong>Which should I choose?</strong></p><ul class="explain"><li><strong>Keep my version</strong> if the plan on this phone is the one you will run. Yours is sent and replaces theirs.</li><li><strong>Open their version</strong> to see the coordinator's changes (for example a new safety note). Your version is kept on this phone as a draft, so you can compare.</li><li><strong>Not sure?</strong> Choose Open their version: nothing is lost either way.</li></ul><div class="actions"><button class="primary" onclick="keepMine('${id}')">Keep my version</button><button onclick="openTheirs('${id}')">Open their version</button><button onclick="closeDialog()">Decide later</button></div>`)};
 window.keepMine=id=>{const p=plansSvc.get(id);closeDialog();plansSvc.setSync(id,'pending',{version:(p.version||0)+1});notify(`Keeping your version of <strong>${esc(p.title)}</strong>. Sending it now.`,'ok');render(false);drain()};
 window.openTheirs=id=>{const p=plansSvc.get(id);closeDialog();
  const copy=plansSvc.saveDraft({...p,title:p.title+' (your earlier copy)'}).plan;
@@ -413,15 +486,16 @@ window.openTheirs=id=>{const p=plansSvc.get(id);closeDialog();
  notify(`Opened the coordinator's version. Your earlier version is kept on this device as a draft called <strong>${esc(copy.title)}</strong>.`,'ok');go('plan/'+id)};
 /* ---------- Dialogs ---------- */
 let opener=null;
-function openDialog(html){opener=document.activeElement;const d=$('dialog');d.innerHTML=html;d.showModal();const b=d.querySelector('button');if(b)b.focus()}
+function stepItem(id,i,text){const art=window.STEMArt&&STEMArt.stepArt(id,i);return art?`<li class="pic"><figure class="stepart">${art.svg}</figure><span>${text}</span></li>`:`<li>${text}</li>`}
+function openDialog(html){opener=document.activeElement;const d=$('dialog');d.innerHTML=html;if($('dlgTitle'))d.setAttribute('aria-labelledby','dlgTitle');d.showModal();const b=d.querySelector('button');if(b)b.focus()}
 window.closeDialog=()=>{const d=$('dialog');if(d.open)d.close()};
 $('dialog').addEventListener('close',()=>{if(opener&&document.contains(opener))opener.focus()});
 function confirmAction(title,text,action){openDialog(`<h2 id="dlgTitle">${title}?</h2><p>${text}</p><div class="actions"><button id="cancel">Cancel</button><button id="confirm" class="primary">${title}</button></div>`);$('cancel').onclick=closeDialog;$('confirm').onclick=()=>{closeDialog();action()}}
 
 /* ---------- Demo & help (test controls) ---------- */
 function guide(){const on=x=>x?' (set)':'';
- $('main').innerHTML=`<div class="eyebrow">Prototype v2.0</div><h1 tabindex="-1">Demo &amp; help</h1><p class="muted">Practise the complete workflows and explore what happens when the connection fails.</p>
- <div class="panel"><h2>Connection and failure controls</h2><p>These controls simulate connectivity and the server. They do not turn off your actual connection.</p>
+ $('main').innerHTML=`<div class="eyebrow">Prototype v2.1</div><h1 tabindex="-1">Demo &amp; help</h1><p class="muted">Practise the complete workflows and explore what happens when the connection fails.</p>
+ <div class="panel"><h2>Connection and failure controls</h2><p>These controls let you practise what happens when things go wrong. They do not turn off your actual connection.</p><ul class="explain"><li><strong>Simulate going offline:</strong> the app behaves as if there is no signal.</li><li><strong>Interrupt next save:</strong> the next Save for offline stops at 60%, as if the signal dropped. You will see what to do.</li><li><strong>Make next sync fail:</strong> the outreach unit does not respond; the app keeps your plan and retries.</li><li><strong>Make next sync conflict:</strong> someone else changed the same plan; you choose which version to keep.</li></ul>
  <div class="actions"><button class="primary" onclick="toggleOffline()">${simulatedOffline?'Return to online mode':'Simulate going offline'}</button>
  <button onclick="interruptNext=true;notify('The next Save for offline will stop at 60%.');render(false)">Interrupt next save${on(interruptNext)}</button>
  <button onclick="failNext=true;conflictNext=false;notify('The next sync will fail, then retry automatically after 8 seconds.');render(false)">Make next sync fail${on(failNext)}</button>
@@ -429,13 +503,13 @@ function guide(){const on=x=>x?' (set)':'';
  <p>${offline()?'Offline mode. Only saved activities can be opened.':'Online mode. All activities are available.'}</p></div>
  <div class="panel"><h2>Three workflows to demonstrate</h2><ol class="steps">
  <li><strong>Find and save:</strong> Browse activities, tick the materials you have, open an activity and choose Save for offline. Try Interrupt next save first to see the failure message.</li>
- <li><strong>Plan a session:</strong> Choose Create session plan. It saves as a Draft straight away. Set a date, adapt the fields, then Review and complete to make it Completed. Open the Assistant view, then record participation counts after the session.</li>
+ <li><strong>Plan a session:</strong> Choose Create lesson plan. It saves as a Draft straight away. Set a date, adapt the fields, then Review and complete to make it Completed. Open the Assistant view, then record participation counts after the session.</li>
  <li><strong>Recover from a failure:</strong> Simulate going offline, save a plan, then return online and watch it sync. Use Make next sync fail or Make next sync conflict, then resolve it. Finally, sign out with an unsynced plan to see the warning.</li></ol>
  <p>For validation: clear the session date or enter 0 minutes, then select Review session plan. The error links move focus to the field that needs attention.</p></div>
  <div class="panel"><h2>Offline and shared devices</h2><p>Saved activities, drafts and plans stay in this browser after refreshing. This HTML file contains the complete app and needs no internet connection to load. Signing out removes everything from this device and warns you first if anything has not synced.</p>
- <button class="danger" onclick="confirmAction('Reset all prototype data','This clears every account, plan and saved activity in this browser.',()=>{try{localStorage.removeItem(KEY)}catch{}data=fresh();persist();go('signin')})">Reset all prototype data</button></div>
+ <button class="danger" onclick="confirmAction('Reset all data','This clears every account, plan and saved activity in this browser.',()=>{try{localStorage.removeItem(KEY)}catch{}data=fresh();persist();go('signin')})">Reset all data</button></div>
  <details class="panel"><summary>Keyboard and accessibility guidance</summary><p>Use Tab and Shift+Tab to move between controls, Enter to follow links, and Space or Enter to press buttons. A skip link moves to the main content. Forms have visible labels, hints and field-level error messages. Status uses words and symbols as well as colour. The layout adapts to narrow screens and enlarged text.</p><p>This prototype has not been certified as WCAG compliant. The team records its own keyboard, contrast and reflow checks and consenting adult evaluation.</p></details>
- <details class="panel"><summary>Scope, version and AI disclosure</summary><p><strong>Version v2.0 (A4 vertical slice).</strong> The slice is creating and saving a session plan: screen, validation (src/validation.js), application logic (src/planService.js) and on-device storage (src/storage.js). Plans are either a Draft (saved, unfinished, not synced) or Completed (all required details present, queued to sync).</p><p>v1.0 was built by the team with OpenAI ChatGPT/Codex coding assistance. A team member added the visual identity and the optional tutorial-video panel. v1.1 added the A3 requirements baseline gaps and accessibility fixes, and v2.0 split the plan feature into tested modules, both with Anthropic Claude coding assistance. The six activities and the accounts are fictional. Synchronisation is simulated; no real server, accounts or classroom deployment exist.</p><p>No participant feedback, test result or individual contribution has been generated by AI.</p></details>`;return 'Demo and help'}
+ <details class="panel"><summary>Scope, version and AI disclosure</summary><p><strong>Version v2.1 (A4 vertical slice, after evaluation).</strong> The slice is creating and saving a session plan: screen, validation (src/validation.js), application logic (src/planService.js) and on-device storage (src/storage.js). Plans are either a Draft (saved, unfinished, not synced) or Completed (all required details present, queued to sync).</p><p>v1.0 was built by the team with OpenAI ChatGPT/Codex coding assistance. A team member added the visual identity and the optional tutorial-video panel. v1.1 added the A3 requirements baseline gaps and accessibility fixes, and v2.0 split the plan feature into tested modules, both with Anthropic Claude coding assistance. The six activities and the accounts are fictional. Synchronisation is simulated; no real server, accounts or classroom deployment exist.</p><p>No participant feedback, test result or individual contribution has been generated by AI.</p></details>`;return 'Demo and help'}
 window.toggleOffline=()=>{simulatedOffline=!simulatedOffline;notify(simulatedOffline?'Offline simulation on. Your local work is safe.':'Back online. Waiting plans will sync now.');render(false);if(!simulatedOffline)drain()};
 
 function missing(){$('main').innerHTML='<h1 tabindex="-1">Page not found</h1><a class="btn" href="#browse">Browse activities</a>';return 'Page not found'}

@@ -1,11 +1,10 @@
-
 # ADR-001: Store Session Plans on the Device
 
 **Project:** STEMMate Namibia  
 **Version:** v2.0  
 **Date:** 5 November 2026  
 **Status:** Accepted  
-**Owner:** Requirements and Architecture  
+**Owner:** Veueza Kavetuna (Requirements and Architecture)  
 **Requirements:** FR-04, QR-02, QR-03
 
 ## 1. Context
@@ -86,7 +85,8 @@ Keeping storage logic separate from the Plan Service makes it easier to change t
 - `src/storage.js`
 - `src/planService.js`
 - Requirements FR-04 and QR-02
-- Tests T06 and T08 (results to be confirmed)
+- Automated test run on v2.0, 5 November 2026 (`node --test`, 12 of 12 passed, run by Shealtiel): T06 (plans survive a restart) and T08 (a failed write returns an error instead of crashing) both passed
+- v2.0 commit `6758079`
 - Component and Deployment Diagrams
 
 ## 7. Conclusion

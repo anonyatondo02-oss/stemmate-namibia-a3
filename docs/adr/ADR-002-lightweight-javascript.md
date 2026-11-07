@@ -1,11 +1,10 @@
-
 # ADR-002: Use Plain HTML, CSS and JavaScript
 
 **Project:** STEMMate Namibia  
 **Version:** v2.0  
 **Date:** 5 November 2026  
-**Status:** Proposed — confirm script-loading method  
-**Owner:** Shealtiel (Developer), with Architecture Team  
+**Status:** Accepted  
+**Owner:** Shealtiel Nyatondo (Developer); recorded by Veueza Kavetuna (Requirements and Architecture)  
 **Requirements:** QR-03, Maintainability
 
 ## 1. Context
@@ -54,19 +53,24 @@ Disadvantages:
 
 ## 3. Decision
 
-The A4 Architecture Guide recommends Option A: Plain HTML, CSS and JavaScript using ordinary scripts.
+We chose Option A: Plain HTML, CSS and JavaScript loaded as ordinary scripts.
 
-However, the A4 Role Guide also instructed the developer to use ES modules.
+This was confirmed against the released v2.0 code: `index.html` loads `src/validation.js`, `src/storage.js` and `src/planService.js` with plain `<script src>` tags (no `type="module"`). Each file exposes itself in two ways: as a browser global (`STEMValidation`, `STEMStorage`, `STEMPlans`) and as a Node export, so the same files run in the browser and in the automated tests.
 
-The final decision between ordinary scripts and ES modules must therefore be confirmed against the released v2.0 code before this ADR is marked Accepted.
-
-The overall decision is to keep STEMMate lightweight and avoid a large framework.
+An earlier version of the team Role Guide mentioned ES modules. That wording was an error and was corrected on 6 November 2026; the built code has always used ordinary scripts.
 
 ## 4. Reasons for the Decision
 
 A lightweight application is suitable for users with limited mobile data and older devices.
 
 It also allows the team to maintain the application without a complicated development environment.
+
+Ordinary scripts were chosen over ES modules (Option C) for two specific reasons:
+
+- **Offline fallback:** browsers refuse to load ES modules from a file opened by double-click (`file://`). Ordinary scripts still work, so a downloaded copy of the app opens with no internet connection.
+- **Testing:** the same files run unchanged in Node's built-in test runner, so the plan logic is tested without a browser or any extra tools.
+
+The whole app is small: about 61 KB for `index.html` and about 10 KB for the three `src` files.
 
 The plan logic is separated into the following files:
 
@@ -82,7 +86,7 @@ Using plain JavaScript means the team must organise the code carefully and manag
 
 The team must also document how the application is opened and tested offline.
 
-If ES modules are used, the offline instructions must account for browser restrictions when opening local files.
+Each module needs a small wrapper so it works both as a browser global and as a Node export. `index.html` is still large and holds the screen logic, so splitting it further is recommended for the next version.
 
 ## 6. Evidence
 
@@ -90,7 +94,8 @@ If ES modules are used, the offline instructions must account for browser restri
 - `src/validation.js`
 - `src/planService.js`
 - `src/storage.js`
-- v2.0 commit `6758079` (verify against GitHub)
+- v2.0 commit `6758079`
+- Automated test run on v2.0, 5 November 2026 (`node --test`, 12 of 12 passed, run by Shealtiel): all 12 automated tests loaded the modules in Node
 - README instructions
 - Component and Deployment Diagrams
 
@@ -98,4 +103,4 @@ If ES modules are used, the offline instructions must account for browser restri
 
 A lightweight HTML, CSS and JavaScript application is appropriate for STEMMate because it reduces complexity and supports affordable deployment.
 
-Before final submission, the developer must confirm whether ordinary scripts or ES modules are used in v2.0.
+The script-loading method was confirmed against the v2.0 code on 6 November 2026: ordinary scripts.

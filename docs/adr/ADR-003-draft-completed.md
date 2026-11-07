@@ -1,11 +1,10 @@
-
 # ADR-003: Separate Draft and Completed Session Plans
 
 **Project:** STEMMate Namibia  
 **Version:** v2.0  
 **Date:** 5 November 2026  
 **Status:** Accepted  
-**Owner:** Requirements and Architecture  
+**Owner:** Veueza Kavetuna (Requirements and Architecture)  
 **Requirements:** FR-03, FR-04, FR-05
 
 ## 1. Context
@@ -59,11 +58,11 @@ We chose Option C: Separate Draft and Completed States.
 
 A facilitator can save an unfinished plan as a Draft.
 
-When the facilitator selects Complete Plan, the application checks the required fields.
+When the facilitator selects **Review and complete**, the application checks the required fields; on the review screen, **Mark plan completed** saves the plan as Completed.
 
 If the information is valid, the plan becomes Completed.
 
-If information is missing or incorrect, the plan remains a Draft and the application shows validation errors.
+If information is missing or incorrect, the plan is saved and remains a Draft, and the application shows an error summary and a message beside each field.
 
 ## 4. Reasons for the Decision
 
@@ -91,8 +90,8 @@ The state and sequence diagrams must match this behaviour.
 - `src/validation.js`
 - A3 feedback
 - Requirements FR-03, FR-04 and FR-05
-- Tests T04, T05 and T06b (results to be confirmed)
-- Evaluation tasks E2 and E3 (results to be confirmed)
+- Automated test run on v2.0, 5 November 2026 (`node --test`, 12 of 12 passed, run by Shealtiel): T04 (incomplete plan stays Draft), T05 (title-only Draft is saved), T05b (valid plan becomes Completed and queued) and T06b (editing a Completed plan reopens it as Draft) all passed
+- Evaluation tasks E2 and E3 (results to be added after the evaluation sessions)
 - Sequence and State Diagrams
 
 ## 7. Conclusion
